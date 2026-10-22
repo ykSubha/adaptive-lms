@@ -30,16 +30,19 @@ import {
 function StatChip({
   label,
   value,
-  color,
+  badge,
 }: {
   label: string;
   value: string | number;
-  color: string;
+  badge?: string;
 }) {
   return (
-    <div className={`px-4 py-3 rounded-2xl border flex flex-col gap-1 ${color}`}>
-      <div className="text-xl font-extrabold leading-none">{value}</div>
-      <div className="text-[11px] font-semibold opacity-75 uppercase tracking-wider">{label}</div>
+    <div className="px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/80 flex flex-col gap-1">
+      <div className="flex items-center justify-between">
+        <span className="text-xl font-bold text-slate-900 leading-none">{value}</span>
+        {badge && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">{badge}</span>}
+      </div>
+      <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{label}</div>
     </div>
   );
 }
@@ -125,24 +128,23 @@ export default function InstructorPage() {
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
-      {/* Banner */}
-      <div className="animate-fade-in-up relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-3xl p-6 md:p-8 text-white shadow-lg shadow-blue-900/20">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
-        <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      {/* Institutional Banner */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-7 shadow-xs">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-blue-200 text-xs font-semibold uppercase tracking-wider mb-2">
+            <div className="flex items-center gap-2 text-blue-700 text-xs font-bold uppercase tracking-wider mb-1">
               <School className="h-4 w-4" />
               <span>Instructor Portal</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-              Welcome, {profile?.full_name?.split(' ')[0] || 'Instructor'} 👋
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Welcome, {profile?.full_name?.split(' ')[0] || 'Instructor'}
             </h1>
-            <p className="text-blue-200 text-sm mt-1.5">Real-time topic pulse analytics & student proctoring audit trails</p>
+            <p className="text-slate-500 text-xs mt-1">Real-time topic pulse analytics & student proctoring audit trails</p>
           </div>
           <button
             onClick={loadInstructorData}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white/15 hover:bg-white/25 border border-white/20 transition text-white shrink-0"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition shrink-0"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
             Refresh Data
@@ -151,11 +153,11 @@ export default function InstructorPage() {
 
         {/* Quick stats row */}
         {!loading && (
-          <div className="relative mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatChip label="Courses" value={courses.length} color="bg-white/10 border-white/20 text-white" />
-            <StatChip label="Topics Tracked" value={pulseData.length} color="bg-white/10 border-white/20 text-white" />
-            <StatChip label="Avg Class Trust" value={`${(avgClassTrust * 100).toFixed(0)}%`} color="bg-white/10 border-white/20 text-white" />
-            <StatChip label="Pending Flags" value={pendingCount} color={pendingCount > 0 ? "bg-amber-400/20 border-amber-300/30 text-white" : "bg-white/10 border-white/20 text-white"} />
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <StatChip label="Courses" value={courses.length} />
+            <StatChip label="Topics Tracked" value={pulseData.length} />
+            <StatChip label="Avg Class Trust" value={`${(avgClassTrust * 100).toFixed(0)}%`} />
+            <StatChip label="Pending Flags" value={pendingCount} badge={pendingCount > 0 ? `${pendingCount} new` : undefined} />
           </div>
         )}
       </div>

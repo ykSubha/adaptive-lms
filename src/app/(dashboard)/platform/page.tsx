@@ -79,28 +79,20 @@ export default function PlatformSuperAdminPage() {
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
-      {/* Banner */}
-      <div className="animate-fade-in-up relative overflow-hidden bg-gradient-to-br from-slate-800 via-slate-900 to-indigo-950 rounded-3xl p-6 md:p-8 text-white shadow-xl shadow-slate-900/30">
-        <div className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-            backgroundSize: '32px 32px',
-          }}
-        />
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 rounded-full -translate-y-1/3 translate-x-1/4 blur-2xl pointer-events-none" />
-
-        <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      {/* Institutional Banner */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-7 shadow-xs">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">
-              <Shield className="h-4 w-4 text-rose-400" />
+            <div className="flex items-center gap-2 text-blue-700 text-xs font-bold uppercase tracking-wider mb-1">
+              <Shield className="h-4 w-4" />
               <span>Platform Super Admin</span>
-              <span className="h-1 w-1 rounded-full bg-slate-600" />
-              <span className="text-emerald-400">Global Root</span>
+              <span className="h-1 w-1 rounded-full bg-slate-400" />
+              <span className="text-emerald-700">Global Root</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               Tenant Provisioning & Management
             </h1>
-            <p className="text-slate-400 text-sm mt-1.5 max-w-xl">
+            <p className="text-slate-500 text-xs mt-1 max-w-xl">
               Manage global multi-tenant entities. Strict RLS prevents super admins from accessing course or student data.
             </p>
           </div>
@@ -108,14 +100,14 @@ export default function PlatformSuperAdminPage() {
             <button
               onClick={loadTenants}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 border border-white/10 transition text-white"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-50 hover:bg-slate-100 border border-slate-200 transition text-slate-700"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition shadow-md shadow-rose-900/40"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-700 hover:bg-blue-800 transition shadow-sm"
             >
               <Plus className="h-3.5 w-3.5" />
               New Tenant
@@ -125,18 +117,18 @@ export default function PlatformSuperAdminPage() {
 
         {/* Quick stats */}
         {!loading && (
-          <div className="relative mt-6 grid grid-cols-3 gap-3">
-            <div className="px-4 py-3 rounded-2xl bg-white/5 border border-white/10">
-              <div className="text-xl font-extrabold">{tenants.length}</div>
-              <div className="text-[11px] text-slate-400 mt-0.5 uppercase tracking-wider">Total Tenants</div>
+          <div className="mt-6 grid grid-cols-3 gap-3">
+            <div className="px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200">
+              <div className="text-xl font-bold text-slate-900 leading-none">{tenants.length}</div>
+              <div className="text-[11px] text-slate-500 mt-1 uppercase tracking-wider font-semibold">Total Tenants</div>
             </div>
-            <div className="px-4 py-3 rounded-2xl bg-white/5 border border-white/10">
-              <div className="text-xl font-extrabold text-emerald-400">{tenants.length}</div>
-              <div className="text-[11px] text-slate-400 mt-0.5 uppercase tracking-wider">Active</div>
+            <div className="px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200">
+              <div className="text-xl font-bold text-emerald-700 leading-none">{tenants.length}</div>
+              <div className="text-[11px] text-slate-500 mt-1 uppercase tracking-wider font-semibold">Active</div>
             </div>
-            <div className="px-4 py-3 rounded-2xl bg-white/5 border border-white/10">
-              <div className="text-xl font-extrabold text-amber-400">0</div>
-              <div className="text-[11px] text-slate-400 mt-0.5 uppercase tracking-wider">Suspended</div>
+            <div className="px-4 py-3 rounded-xl bg-slate-50/80 border border-slate-200">
+              <div className="text-xl font-bold text-amber-700 leading-none">0</div>
+              <div className="text-[11px] text-slate-500 mt-1 uppercase tracking-wider font-semibold">Suspended</div>
             </div>
           </div>
         )}
@@ -238,14 +230,14 @@ export default function PlatformSuperAdminPage() {
       {showCreateModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
           <div className="animate-scale-in bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-900 text-white">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50 text-slate-900">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-rose-400" />
+                <Sparkles className="h-4 w-4 text-blue-700" />
                 <h3 className="text-sm font-bold">Provision New Tenant</h3>
               </div>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -262,12 +254,12 @@ export default function PlatformSuperAdminPage() {
                     if (!tenantSlug) setTenantSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '-'));
                   }}
                   placeholder="e.g. Gamma University"
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 transition"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition"
                 />
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">Slug / Identifier</label>
-                <div className="flex items-center rounded-xl border border-slate-200 overflow-hidden focus-within:border-rose-500 focus-within:ring-2 focus-within:ring-rose-500/20 transition">
+                <div className="flex items-center rounded-xl border border-slate-200 overflow-hidden focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition">
                   <span className="px-3 py-2.5 bg-slate-50 text-slate-400 text-xs font-mono border-r border-slate-200 shrink-0">slug:</span>
                   <input
                     type="text"
@@ -278,7 +270,7 @@ export default function PlatformSuperAdminPage() {
                     className="flex-1 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none bg-white"
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1">Will resolve to <span className="font-mono text-indigo-600">{tenantSlug || 'slug'}.test</span></p>
+                <p className="text-[10px] text-slate-400 mt-1">Will resolve to <span className="font-mono text-blue-700">{tenantSlug || 'slug'}.test</span></p>
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
@@ -290,7 +282,7 @@ export default function PlatformSuperAdminPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-700 transition shadow-sm shadow-rose-200"
+                  className="px-4 py-2 rounded-xl bg-blue-700 text-white font-bold text-sm hover:bg-blue-800 transition shadow-sm"
                 >
                   Provision Tenant
                 </button>

@@ -24,19 +24,36 @@ const AuthContext = createContext<AuthContextType>({
   switchSeedAccount: async () => 'student',
 });
 
+function getInitialProfile(): Profile {
+  if (typeof window !== 'undefined') {
+    const urlParam = new URLSearchParams(window.location.search).get('demo_user');
+    const cookieMatch = document.cookie.match(/demo_user_email=([^;]+)/);
+    const cookieEmail = cookieMatch ? decodeURIComponent(cookieMatch[1].trim()) : null;
+    const savedEmail = localStorage.getItem('adaptive_lms_demo_user');
+    const email = urlParam || cookieEmail || savedEmail || 'student@alpha.test';
+    return INITIAL_PROFILES.find(p => p.email.toLowerCase() === email.toLowerCase()) || INITIAL_PROFILES[0];
+  }
+  return INITIAL_PROFILES[0];
+}
+
+function getInitialTenant(prof: Profile): Tenant | null {
+  if (!prof.tenant_id) return null;
+  return INITIAL_TENANTS.find(t => t.id === prof.tenant_id) || null;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [loading, setLoading] = useState(true);
+  const isLive = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder'));
+  const [profile, setProfile] = useState<Profile | null>(() => (isLive ? null : getInitialProfile()));
+  const [tenant, setTenant] = useState<Tenant | null>(() => (isLive ? null : getInitialTenant(getInitialProfile())));
+  const [loading, setLoading] = useState(isLive);
   const router = useRouter();
 
   // Helper to resolve profile from cookie or local state
   const loadUser = async () => {
-    setLoading(true);
     const supabase = createClient();
-    const isLive = process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
 
     if (isLive) {
+      setLoading(true);
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
@@ -67,9 +84,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Check demo cookie / localStorage
-    const savedEmail = typeof window !== 'undefined' ? localStorage.getItem('adaptive_lms_demo_user') : null;
-    const activeEmail = savedEmail || 'student@alpha.test';
+    // Check URL param, demo cookie, or localStorage
+    let activeEmail = 'student@alpha.test';
+    if (typeof window !== 'undefined') {
+      const urlParam = new URLSearchParams(window.location.search).get('demo_user');
+      const cookieMatch = document.cookie.match(/demo_user_email=([^;]+)/);
+      const cookieEmail = cookieMatch ? decodeURIComponent(cookieMatch[1].trim()) : null;
+      const savedEmail = localStorage.getItem('adaptive_lms_demo_user');
+      activeEmail = urlParam || cookieEmail || savedEmail || 'student@alpha.test';
+      if (urlParam) {
+        localStorage.setItem('adaptive_lms_demo_user', urlParam);
+      }
+    }
     const foundProfile = INITIAL_PROFILES.find(p => p.email.toLowerCase() === activeEmail.toLowerCase()) || INITIAL_PROFILES[0];
     const foundTenant = foundProfile.tenant_id ? INITIAL_TENANTS.find(t => t.id === foundProfile.tenant_id) || null : null;
 

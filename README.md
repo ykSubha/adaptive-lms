@@ -34,11 +34,17 @@ The platform provides isolated multi-tenant management, adaptive assessment with
 - Next.js middleware and server-side session checks verifying user profile role and tenant ID.
 - Dynamic layout showing current user name, role badge, and active tenant name.
 
-### 2. Adaptive Student Quiz Flow
+### 2. Adaptive Student Quiz Flow & CSE Question Bank
+- **Expanded CSE Curriculum**: Covers Data Structures & Algorithms (DSA), Machine Learning (ML), Data Science & Analytics (DS), and Operating Systems & Networks.
+- **5-Question Capped Sessions**: Quizzes run as structured 5-question diagnostic assessments with progress tracking, avoiding endless loops, and finishing with an in-depth score and topic mastery breakdown.
 - Dynamically fetches questions via `supabase.rpc("next_question", { p_course_id })`.
 - Highlights the student's weakest topic with calibrated difficulty and a dynamic "Why this question?" explanation card.
 - High-precision response time tracker (in milliseconds).
 - Answer submission via `supabase.rpc("submit_answer", { p_question_id, p_selected, p_response_ms })`, computing real-time Exponential Moving Average updates to `cognitive_profiles`.
+
+### 2.1 Institutional Portal Design
+- Crisp, professional academic design inspired by institutional portals (referencing `ps.bitsathy.ac.in`).
+- Clean white surfaces, slate borders, royal blue accents, and accessible typography with zero dark themes.
 
 ### 3. Client-Side Proctoring (`src/lib/proctor.ts`)
 - Event listeners for `visibilitychange` (tab switching) and `window.blur` (focus loss).
