@@ -1,8 +1,16 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from './src/lib/supabase/middleware';
 
+const SEED_EMAIL_ROLE_MAP: Record<string, string> = {
+  'student@alpha.test': 'student',
+  'student@beta.test': 'student',
+  'instructor@alpha.test': 'instructor',
+  'admin@alpha.test': 'tenant_admin',
+  'super@demo.test': 'super_admin',
+};
+
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
 
   // Static assets and internal next requests pass through
   if (
@@ -17,9 +25,17 @@ export async function middleware(request: NextRequest) {
   // Update live Supabase session cookies if configured
   const response = await updateSession(request);
 
-  // Check user role from cookie or auth header
-  const demoRole = request.cookies.get('demo_user_role')?.value;
-  const demoEmail = request.cookies.get('demo_user_email')?.value;
+  // Allow query param ?demo_user=email to set active user for testing
+  const demoParam = searchParams.get('demo_user');
+  let demoRole = request.cookies.get('demo_user_role')?.value;
+  let demoEmail = request.cookies.get('demo_user_email')?.value;
+
+  if (demoParam && SEED_EMAIL_ROLE_MAP[demoParam]) {
+    demoEmail = demoParam;
+    demoRole = SEED_EMAIL_ROLE_MAP[demoParam];
+    response.cookies.set('demo_user_email', demoEmail, { path: '/', maxAge: 604800 });
+    response.cookies.set('demo_user_role', demoRole, { path: '/', maxAge: 604800 });
+  }
 
   const isAuthPage = pathname.startsWith('/login');
   const isProtected =
@@ -30,7 +46,6 @@ export async function middleware(request: NextRequest) {
 
   // If user is not logged in and attempts to access protected page
   if (isProtected && !demoRole && !demoEmail) {
-    // Check if live supabase token exists
     const hasSbToken = request.cookies.getAll().some(c => c.name.startsWith('sb-'));
     if (!hasSbToken) {
       const loginUrl = new URL('/login', request.url);
@@ -39,7 +54,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // If user is logged in with demo/cookie role and goes to /login, redirect to their role home
-  if (isAuthPage && demoRole) {
+  if (isAuthPage && demoRole && !demoParam) {
     const roleRoutes: Record<string, string> = {
       student: '/student',
       instructor: '/instructor',
