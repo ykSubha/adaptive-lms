@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import Heatmap from '@/components/Heatmap';
 import { Course, Topic, CognitiveProfile } from '@/lib/types';
 import { recommend, RecommendationResult } from '@/lib/recommend';
+import { calculateKnowledgeScore, KnowledgeScoreResult } from '@/lib/knowledgeScore';
 import {
   INITIAL_COURSES,
   INITIAL_ENROLLMENTS,
@@ -36,6 +37,7 @@ import {
   TrendingUp,
   AlertTriangle,
   FileText,
+  Sparkles,
 } from 'lucide-react';
 
 interface EnrolledCourseWithDetails {
@@ -189,6 +191,11 @@ function StudentContent() {
 
   const primaryCourse = enrolledCourses[0];
   const primaryWeakest = primaryCourse?.weakestTopic;
+  const knowledgeScore = calculateKnowledgeScore(
+    primaryCourse?.cognitiveProfiles || [],
+    primaryCourse?.topics || [],
+    primaryCourse?.avgTrust || 0.53
+  );
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -230,18 +237,28 @@ function StudentContent() {
             </div>
             <div className="text-[11px] font-semibold text-slate-500 mt-1 uppercase tracking-wider">Cohort Mastery</div>
           </div>
-          <div className="px-4 py-3 rounded-xl border border-[#dbe7dc] bg-[#f8faf8]">
-            <div className="text-base font-bold text-rose-700 leading-tight truncate">
-              {primaryWeakest?.name.split(' ')[0] || 'Machine Learning'}
+          <div className="px-4 py-3 rounded-xl border border-[#c8dec9] bg-[#edf4ee] flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-xl font-bold text-[#254d37] leading-none">
+                {knowledgeScore.score} <span className="text-xs font-semibold text-slate-500">/ 100</span>
+              </span>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${knowledgeScore.tierBadge}`}>
+                {knowledgeScore.tier}
+              </span>
             </div>
-            <div className="text-[11px] font-semibold text-slate-500 mt-1 uppercase tracking-wider">Focus Deficit</div>
+            <div className="text-[11px] font-semibold text-[#254d37] mt-1 uppercase tracking-wider flex items-center gap-1">
+              <Sparkles className="h-3 w-3 text-[#2e5a44]" />
+              Knowledge Score
+            </div>
           </div>
-          <div className="px-4 py-3 rounded-xl border border-[#dbe7dc] bg-[#f8faf8]">
-            <div className="text-base font-bold text-[#2e5a44] leading-tight flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              Autonomous CV
+          <div className="px-4 py-3 rounded-xl border border-[#dbe7dc] bg-[#f8faf8] flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className={`text-base font-bold leading-tight ${knowledgeScore.cohortDelta >= 0 ? 'text-[#2e5a44]' : 'text-amber-700'}`}>
+                {knowledgeScore.cohortDelta >= 0 ? `+${knowledgeScore.cohortDelta} pts` : `${knowledgeScore.cohortDelta} pts`}
+              </span>
+              <span className="text-[10px] text-slate-400 font-semibold">{knowledgeScore.percentile}th %ile</span>
             </div>
-            <div className="text-[11px] font-semibold text-slate-500 mt-1 uppercase tracking-wider">Proctoring Ready</div>
+            <div className="text-[11px] font-semibold text-slate-500 mt-1 uppercase tracking-wider">Cohort Benchmark</div>
           </div>
         </div>
       )}
@@ -249,6 +266,82 @@ function StudentContent() {
       {/* --- TAB VIEW 1: DASHBOARD & COURSES --- */}
       {(activeTab === 'dashboard' || activeTab === 'courses') && (
         <section className="space-y-5 animate-fade-in">
+          {/* Candidate Academic Knowledge Score Diagnostic Card */}
+          {!loading && primaryCourse && (
+            <div className="bg-white rounded-2xl border border-[#dbe7dc] p-6 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#eaf0eb] pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-[#edf4ee] text-[#2e5a44]">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-bold text-slate-900">Academic Knowledge Score</h3>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#edf4ee] text-[#2e5a44] border border-[#c8dec9]">
+                        Individual Academic Metric
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Personalized multi-dimensional proficiency index (distinct from class-wide Cohort Mastery of {((primaryCourse?.avgTrust ?? 0.53) * 100).toFixed(0)}%)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 bg-[#f8faf8] p-2 rounded-xl border border-[#dbe7dc]">
+                  <div className="text-right">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase">Index Standing</div>
+                    <div className="text-xs font-bold text-[#2e5a44]">{knowledgeScore.tier} Candidate</div>
+                  </div>
+                  <div className="h-10 w-10 rounded-xl bg-[#2e5a44] text-white flex items-center justify-center font-black text-sm shadow-xs">
+                    {knowledgeScore.score}
+                  </div>
+                </div>
+              </div>
+
+              {/* Knowledge Dimensions Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {knowledgeScore.dimensions.map(dim => (
+                  <div key={dim.topicId} className="p-3.5 rounded-xl border border-[#dbe7dc] bg-[#f8faf8] space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-slate-800 truncate">{dim.topicName}</span>
+                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${dim.badgeClass}`}>
+                        {dim.tier}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-lg font-bold text-slate-900">{dim.score}<span className="text-xs text-slate-400 font-normal">/100</span></span>
+                      <span className="text-[10px] text-slate-400 font-mono">Weight: {dim.weight}x</span>
+                    </div>
+                    <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          dim.score >= 70 ? 'bg-[#2e5a44]' : dim.score >= 45 ? 'bg-amber-500' : 'bg-rose-500'
+                        }`}
+                        style={{ width: `${dim.score}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Knowledge Score Explanation & Recommendation */}
+              <div className="p-3.5 rounded-xl bg-[#f8faf8] border border-[#dbe7dc] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-slate-600">
+                  <Target className="h-4 w-4 text-[#2e5a44] shrink-0 mt-0.5" />
+                  <span>{knowledgeScore.summary} {knowledgeScore.recommendation}</span>
+                </div>
+                {primaryCourse?.course && (
+                  <Link
+                    href={`/student/course/${primaryCourse.course.id}/quiz`}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#2e5a44] hover:bg-[#254937] transition shadow-xs shrink-0 flex items-center gap-1"
+                  >
+                    Boost Knowledge Score <ArrowRight className="h-3 w-3" />
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <BookOpen className="h-4 w-4 text-[#2e5a44]" />
@@ -489,7 +582,7 @@ function StudentContent() {
                   </div>
                 </div>
                 <span className="text-xs font-bold text-rose-800 bg-white px-2.5 py-1 rounded-lg border border-rose-200">
-                  Focus Target (28%)
+                  Needs Review (28%)
                 </span>
               </div>
             </div>
@@ -608,6 +701,39 @@ function StudentContent() {
             <div className="flex items-center space-x-2">
               <BarChart3 className="h-4 w-4 text-[#2e5a44]" />
               <h2 className="text-base font-bold text-slate-900">Cognitive Profile &amp; Progress Trajectory</h2>
+            </div>
+          </div>
+
+          {/* Knowledge Score vs Cohort Mastery Comparison Card */}
+          <div className="bg-white rounded-2xl border border-[#dbe7dc] p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-[#2e5a44]" />
+                <h3 className="text-base font-bold text-slate-900">Knowledge Score vs Cohort Mastery</h3>
+              </div>
+              <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${knowledgeScore.tierBadge}`}>
+                {knowledgeScore.tier} ({knowledgeScore.score}/100)
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-relaxed">
+              <strong>Cohort Mastery ({((primaryCourse?.avgTrust ?? 0.53) * 100).toFixed(0)}%)</strong> reflects the aggregate class-wide average performance. In contrast, your <strong>Knowledge Score ({knowledgeScore.score}/100)</strong> is an individualized weighted metric measuring deep retention, difficulty scaling, and evaluation consistency across syllabus units.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <div className="p-4 rounded-xl border border-[#c8dec9] bg-[#edf4ee] space-y-1">
+                <div className="text-[10px] font-bold text-slate-500 uppercase">Individual Knowledge Score</div>
+                <div className="text-2xl font-black text-[#254d37]">{knowledgeScore.score} <span className="text-xs font-normal text-slate-500">/ 100</span></div>
+                <div className="text-[11px] text-[#2e5a44] font-semibold">{knowledgeScore.percentile}th percentile across department</div>
+              </div>
+
+              <div className="p-4 rounded-xl border border-slate-200 bg-[#f8faf8] space-y-1">
+                <div className="text-[10px] font-bold text-slate-500 uppercase">Class Cohort Mastery Average</div>
+                <div className="text-2xl font-black text-slate-800">{((primaryCourse?.avgTrust ?? 0.53) * 100).toFixed(0)}%</div>
+                <div className="text-[11px] text-slate-500 font-semibold">
+                  {knowledgeScore.cohortDelta >= 0 ? `+${knowledgeScore.cohortDelta} pts above cohort` : `${knowledgeScore.cohortDelta} pts below cohort`}
+                </div>
+              </div>
             </div>
           </div>
 

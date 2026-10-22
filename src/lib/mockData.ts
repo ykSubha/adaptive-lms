@@ -12,6 +12,7 @@ export const INITIAL_PROFILES: Profile[] = [
     email: 'student@alpha.test',
     full_name: 'Alice Vance',
     role: 'student',
+    knowledge_score: 74,
     created_at: '2026-01-01T00:00:00Z'
   },
   {
@@ -20,6 +21,7 @@ export const INITIAL_PROFILES: Profile[] = [
     email: 'student@beta.test',
     full_name: 'Bob Chen',
     role: 'student',
+    knowledge_score: 62,
     created_at: '2026-01-01T00:00:00Z'
   },
   {

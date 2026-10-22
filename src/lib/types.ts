@@ -13,6 +13,7 @@ export interface Profile {
   email: string;
   full_name: string;
   role: UserRole;
+  knowledge_score?: number;
   created_at: string;
   tenants?: Tenant | null;
 }
