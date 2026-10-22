@@ -135,18 +135,25 @@ export default function ProctorCamera({ onFlag, eventCount }: ProctorCameraProps
         const img = cvCtx.getImageData(0, 0, 160, 120);
         const data = img.data;
 
-        let skinPixels = 0;
-        let sumX = 0;
-        let sumY = 0;
+        // Histograms and bounding box metrics for face (upper frame y in [10, 80])
+        let upperSkinPixels = 0;
+        let upperSumX = 0;
+        let upperSumY = 0;
+        let faceMinX = 160;
+        let faceMaxX = 0;
+        let faceMinY = 120;
+        let faceMaxY = 0;
 
-        let leftSkin = 0;
-        let rightSkin = 0;
+        // 16-bin horizontal skin histogram for upper frame to detect dual heads
+        const upperHist = new Array(16).fill(0);
 
-        // Mobile detection: count high-luminance screen-like pixels or dark phone bezel in lower third
-        let lowerBrightPixels = 0;
-        let lowerDarkClusters = 0;
+        // Mobile screen detection: localized high-luminance bounding box
+        let brightPixels = 0;
+        let brightMinX = 160;
+        let brightMaxX = 0;
+        let brightMinY = 120;
+        let brightMaxY = 0;
 
-        const totalPixels = 160 * 120;
         for (let i = 0; i < data.length; i += 4) {
           const pixelIndex = i / 4;
           const x = pixelIndex % 160;
@@ -166,31 +173,34 @@ export default function ProctorCamera({ onFlag, eventCount }: ProctorCameraProps
             Math.abs(r - g) > 10 &&
             r - b > 10;
 
-          if (isSkin && y < 100) {
-            skinPixels++;
-            sumX += x;
-            sumY += y;
+          // Upper area (head and face region, avoiding neck/torso skew)
+          if (isSkin && y >= 10 && y <= 80) {
+            upperSkinPixels++;
+            upperSumX += x;
+            upperSumY += y;
 
-            if (x < 65) leftSkin++;
-            if (x > 95) rightSkin++;
+            if (x < faceMinX) faceMinX = x;
+            if (x > faceMaxX) faceMaxX = x;
+            if (y < faceMinY) faceMinY = y;
+            if (y > faceMaxY) faceMaxY = y;
+
+            const bin = Math.min(15, Math.floor(x / 10));
+            upperHist[bin]++;
           }
 
-          // Mobile device detection in lower half of candidate frame
-          if (y > 65) {
-            const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-            // Glowing screen: high luminance with low color variance
-            if (luminance > 210 && Math.abs(r - g) < 20 && Math.abs(g - b) < 20) {
-              lowerBrightPixels++;
-            }
-            // Dark phone chassis
-            if (luminance < 25) {
-              lowerDarkClusters++;
-            }
+          // Mobile device screen: localized bright glow in mid-to-lower frame (y >= 45)
+          // Glowing mobile screens have high brightness (R,G,B > 195)
+          if (y >= 45 && r > 195 && g > 195 && b > 195) {
+            brightPixels++;
+            if (x < brightMinX) brightMinX = x;
+            if (x > brightMaxX) brightMaxX = x;
+            if (y < brightMinY) brightMinY = y;
+            if (y > brightMaxY) brightMaxY = y;
           }
         }
 
         // --- RULE 1: Face Missing ---
-        if (skinPixels < 180) {
+        if (upperSkinPixels < 120) {
           consecutiveCounters.current.missing++;
           if (consecutiveCounters.current.missing >= 2) {
             setCvDiagnostic('No Candidate Detected');
@@ -201,27 +211,48 @@ export default function ProctorCamera({ onFlag, eventCount }: ProctorCameraProps
           consecutiveCounters.current.missing = 0;
           setDetectionState(prev => ({ ...prev, facePresent: true }));
 
-          const avgX = sumX / skinPixels;
-          const normX = Math.round((avgX / 160) * 100);
-          setDetectionState(prev => ({ ...prev, centroidX: normX }));
+          const faceAvgX = upperSumX / upperSkinPixels;
+          const faceWidth = Math.max(1, faceMaxX - faceMinX);
+          const faceRelativeX = (faceAvgX - faceMinX) / faceWidth;
+          const normCentroidX = Math.round((faceAvgX / 160) * 100);
+          setDetectionState(prev => ({ ...prev, centroidX: normCentroidX }));
 
-          // --- RULE 2: Eye / Head Diversion ---
-          // Center is ~50%. Significant deviation: < 32% (looking far right) or > 68% (looking far left)
-          if (normX < 32 || normX > 68) {
+          // --- RULE 2: Autonomous Eye / Head Gaze Diversion ---
+          // Looking forward is symmetric: faceRelativeX is ~0.50 (0.41 - 0.59) and faceAvgX is roughly centered (52 - 108).
+          // Turning head sideways creates strong asymmetric profile (relativeX < 0.38 or > 0.62) or shifts head off-center (avgX < 48 or > 112).
+          const isGazeDeviated =
+            faceRelativeX < 0.37 ||
+            faceRelativeX > 0.63 ||
+            faceAvgX < 48 ||
+            faceAvgX > 112;
+
+          if (isGazeDeviated) {
             consecutiveCounters.current.gazeShift++;
             if (consecutiveCounters.current.gazeShift >= 2) {
-              setCvDiagnostic(`Gaze Deviated (${normX}%)`);
+              setCvDiagnostic(`Gaze Deviated (${normCentroidX}%)`);
               setDetectionState(prev => ({ ...prev, gazeCentered: false }));
-              triggerWarning('Eye diversion detected. Please look directly at the examination screen.', 'eye_diversion', 0.85, 'medium');
+              triggerWarning('Eye diversion detected. Please look directly at the examination screen.', 'eye_diversion', 0.86, 'medium');
             }
           } else {
             consecutiveCounters.current.gazeShift = 0;
             setDetectionState(prev => ({ ...prev, gazeCentered: true }));
-            setCvDiagnostic(`Face Centered (${normX}%)`);
+            setCvDiagnostic(`Face Centered (${normCentroidX}%)`);
           }
 
-          // --- RULE 3: Multiple Faces ---
-          if (leftSkin > 350 && rightSkin > 350 && Math.abs(leftSkin - rightSkin) < 200) {
+          // --- RULE 3: Autonomous Multiple Faces Detection ---
+          // Detect dual separate peaks across the 16 horizontal bins in the upper frame
+          let peakCount = 0;
+          for (let b = 1; b < 15; b++) {
+            if (upperHist[b] >= 30 && upperHist[b] > upperHist[b - 1] && upperHist[b] > upperHist[b + 1]) {
+              peakCount++;
+            }
+          }
+
+          // Check if upper face span is abnormally wide (e.g. 2 heads in frame)
+          const isExtraWideSpan = faceWidth > 98 && upperSkinPixels > 650;
+          const isDualPeaks = peakCount >= 2 && faceWidth > 75;
+
+          if (isDualPeaks || isExtraWideSpan) {
             consecutiveCounters.current.multiFace++;
             if (consecutiveCounters.current.multiFace >= 2) {
               setCvDiagnostic('Multiple Faces in View');
@@ -234,13 +265,28 @@ export default function ProctorCamera({ onFlag, eventCount }: ProctorCameraProps
           }
         }
 
-        // --- RULE 4: Mobile Device Detected ---
-        if (lowerBrightPixels > 70 || lowerDarkClusters > 450) {
+        // --- RULE 4: Mobile Phone Detection ---
+        // A mobile phone held in view has:
+        // 1. Concentrated high-luminance screen pixels (at least 45 pixels)
+        // 2. Compact localized bounding box (width 16px to 60px, height 22px to 75px)
+        // 3. Aspect ratio of screen/phone is vertical or near-vertical (height/width >= 1.05)
+        // 4. Must NOT span the entire frame (which would be a white shirt or background wall, where boxWidth > 70)
+        const brightWidth = brightMaxX - brightMinX;
+        const brightHeight = brightMaxY - brightMinY;
+        const isMobileScreen =
+          brightPixels >= 45 &&
+          brightWidth >= 16 &&
+          brightWidth <= 62 &&
+          brightHeight >= 22 &&
+          brightHeight <= 75 &&
+          brightHeight / Math.max(1, brightWidth) >= 1.05;
+
+        if (isMobileScreen) {
           consecutiveCounters.current.phone++;
-          if (consecutiveCounters.current.phone >= 2) {
+          if (consecutiveCounters.current.phone >= 3) {
             setCvDiagnostic('Mobile Device Detected');
             setDetectionState(prev => ({ ...prev, phoneDetected: true }));
-            triggerWarning('Mobile phone or unauthorized screen detected on camera.', 'mobile_detected', 0.93, 'high');
+            triggerWarning('Mobile phone or unauthorized screen detected on camera.', 'mobile_detected', 0.94, 'high');
           }
         } else {
           consecutiveCounters.current.phone = 0;
@@ -250,12 +296,12 @@ export default function ProctorCamera({ onFlag, eventCount }: ProctorCameraProps
       } catch (err) {
         // Safe canvas read fallback
       }
-    }, 850);
+    }, 600);
 
     return () => clearInterval(cvInterval);
   }, [hasCamera, simulatedMode, triggerWarning]);
 
-  // Autonomous Vision Timeline for Simulated Mode (runs continuously when no physical webcam is active)
+  // Autonomous Vision Timeline for Simulated Mode (No random unsolicited mobile alerts)
   useEffect(() => {
     if (!simulatedMode) return;
 
@@ -263,22 +309,13 @@ export default function ProctorCamera({ onFlag, eventCount }: ProctorCameraProps
     const simInterval = setInterval(() => {
       cycle++;
 
-      // Every 35 seconds, automatically simulate a brief realistic gaze diversion
-      if (cycle % 35 === 15) {
+      // Every 45 seconds in simulated mode, demonstrate a brief realistic gaze diversion
+      if (cycle % 45 === 25) {
         setDetectionState(prev => ({ ...prev, gazeCentered: false }));
         triggerWarning('Eye diversion detected: Candidate looking away from assessment display.', 'eye_diversion', 0.84, 'medium');
         setTimeout(() => {
           setDetectionState(prev => ({ ...prev, gazeCentered: true }));
-        }, 4000);
-      }
-
-      // Every 60 seconds, automatically simulate a mobile detection event
-      if (cycle % 60 === 45) {
-        setDetectionState(prev => ({ ...prev, phoneDetected: true }));
-        triggerWarning('Mobile device detected on camera feed. Keep all external devices away.', 'mobile_detected', 0.94, 'high');
-        setTimeout(() => {
-          setDetectionState(prev => ({ ...prev, phoneDetected: false }));
-        }, 4000);
+        }, 3500);
       }
     }, 1000);
 

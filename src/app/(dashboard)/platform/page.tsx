@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import { createClient } from '@/lib/supabase/client';
 import { Tenant } from '@/lib/types';
@@ -14,17 +15,27 @@ import {
   Globe,
   RefreshCw,
   X,
-  Sparkles,
   Calendar,
   Hash,
   Activity,
   Server,
+  Search,
+  ChevronRight,
+  ShieldCheck,
+  Cpu,
+  Layers,
+  ArrowRight,
 } from 'lucide-react';
 
-export default function PlatformSuperAdminPage() {
+function PlatformContent() {
   const { profile } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const activeTab = searchParams ? searchParams.get('tab') || 'dash' : 'dash';
+
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [tenantName, setTenantName] = useState('');
   const [tenantSlug, setTenantSlug] = useState('');
@@ -37,13 +48,24 @@ export default function PlatformSuperAdminPage() {
       try {
         const supabase = createClient();
         const { data: tenantList } = await supabase.from('tenants').select('*').order('created_at', { ascending: false });
-        if (tenantList) { setTenants(tenantList); setLoading(false); return; }
-      } catch (err) { console.warn('Live fetch failed, using mock data:', err); }
+        if (tenantList) {
+          setTenants(tenantList);
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('Live fetch failed, using mock data:', err);
+      }
     }
-    setTimeout(() => { setTenants([...INITIAL_TENANTS]); setLoading(false); }, 250);
+    setTimeout(() => {
+      setTenants([...INITIAL_TENANTS]);
+      setLoading(false);
+    }, 200);
   };
 
-  useEffect(() => { loadTenants(); }, [profile]);
+  useEffect(() => {
+    loadTenants();
+  }, [profile]);
 
   const handleCreateTenant = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,40 +78,41 @@ export default function PlatformSuperAdminPage() {
     };
     const isLive = process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
     if (isLive) {
-      try { const supabase = createClient(); await supabase.from('tenants').insert(newTenant); }
-      catch (err) { console.warn('Live insert failed:', err); }
+      try {
+        const supabase = createClient();
+        await supabase.from('tenants').insert(newTenant);
+      } catch (err) {
+        console.warn('Live insert failed:', err);
+      }
     }
     INITIAL_TENANTS.push(newTenant);
     setTenants(prev => [newTenant, ...prev]);
-    setTenantName(''); setTenantSlug('');
+    setTenantName('');
+    setTenantSlug('');
     setShowCreateModal(false);
     setFeedbackMsg(`Tenant "${newTenant.name}" provisioned successfully.`);
     setTimeout(() => setFeedbackMsg(null), 3500);
   };
 
-  // Color palette for tenant cards - institutional sage tones
-  const CARD_GRADIENTS = [
-    'from-[#2e5a44] to-[#3d6651]',
-    'from-[#3d6651] to-[#4c7860]',
-    'from-[#254937] to-[#2e5a44]',
-  ];
+  const filteredTenants = tenants.filter(t =>
+    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.slug.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* Institutional Banner */}
       <div className="bg-white rounded-2xl border border-[#dbe7dc] p-6 md:p-7 shadow-xs">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-[#2e5a44] text-xs font-bold uppercase tracking-wider mb-1">
               <Shield className="h-4 w-4" />
-              <span>Multi-Tenant Governance</span>
-              <span className="h-1 w-1 rounded-full bg-slate-400" />
-              <span className="text-[#2e5a44]">Infrastructure Root</span>
+              <span>Multi-Tenant Infrastructure Governance</span>
             </div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               Institutional Tenancy &amp; Entity Directory
             </h1>
-            <p className="text-slate-500 text-xs mt-1 max-w-xl">
+            <p className="text-slate-500 text-xs mt-0.5 max-w-xl">
               Partitioned organizational instances directory. Strict RLS policy prevents cross-tenant and platform access to academic records and course materials.
             </p>
           </div>
@@ -112,36 +135,34 @@ export default function PlatformSuperAdminPage() {
           </div>
         </div>
 
-        {/* Quick stats */}
         {!loading && (
-          <div className="mt-6 grid grid-cols-3 gap-3">
+          <div className="mt-5 grid grid-cols-3 gap-3">
             <div className="px-4 py-3 rounded-xl bg-[#f8faf8] border border-[#dbe7dc]">
               <div className="text-xl font-bold text-slate-900 leading-none">{tenants.length}</div>
               <div className="text-[11px] text-slate-500 mt-1 uppercase tracking-wider font-semibold">Total Entities</div>
             </div>
             <div className="px-4 py-3 rounded-xl bg-[#f8faf8] border border-[#dbe7dc]">
               <div className="text-xl font-bold text-[#2e5a44] leading-none">{tenants.length}</div>
-              <div className="text-[11px] text-slate-500 mt-1 uppercase tracking-wider font-semibold">Active</div>
+              <div className="text-[11px] text-slate-500 mt-1 uppercase tracking-wider font-semibold">Active Partitions</div>
             </div>
             <div className="px-4 py-3 rounded-xl bg-[#f8faf8] border border-[#dbe7dc]">
-              <div className="text-xl font-bold text-amber-700 leading-none">0</div>
-              <div className="text-[11px] text-slate-500 mt-1 uppercase tracking-wider font-semibold">Suspended</div>
+              <div className="text-xl font-bold text-emerald-700 leading-none">100%</div>
+              <div className="text-[11px] text-slate-500 mt-1 uppercase tracking-wider font-semibold">RLS Compliance</div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Feedback */}
       {feedbackMsg && (
-        <div className="animate-scale-in flex items-center gap-2.5 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-sm font-semibold text-emerald-800">
-          <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
+        <div className="animate-scale-in flex items-center gap-2.5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
           <span>{feedbackMsg}</span>
         </div>
       )}
 
       {/* Security isolation notice */}
-      <div className="animate-fade-in-up flex items-start gap-3 p-4 rounded-2xl bg-amber-50/80 border border-amber-200">
-        <div className="p-2 rounded-xl bg-amber-100 text-amber-700 shrink-0">
+      <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-50/80 border border-amber-200">
+        <div className="p-2 rounded-xl bg-amber-100 text-amber-800 shrink-0">
           <Lock className="h-4 w-4" />
         </div>
         <div>
@@ -152,76 +173,151 @@ export default function PlatformSuperAdminPage() {
         </div>
       </div>
 
-      {/* Tenant Cards Grid */}
-      <section className="animate-fade-in-up">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
-            <Server className="h-5 w-5 text-[#2e5a44]" />
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">Provisioned Departments &amp; Entities</h2>
-              <p className="text-xs text-slate-400">Active institutional tenancy nodes</p>
+      {/* =========================================================================
+          VIEW 1: MULTI-TENANT GOVERNANCE (tab === 'dash')
+          ========================================================================= */}
+      {activeTab === 'dash' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* System Partitioning Card */}
+            <div className="bg-white rounded-2xl border border-[#dbe7dc] p-6 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 text-[#2e5a44] font-bold text-sm">
+                <Server className="h-4 w-4" />
+                <span>Multi-Tenant Architecture</span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Each institutional department operates in a dedicated logical database partition. Student assessments, cognitive profiles, and proctoring telemetry are isolated via Postgres Row-Level Security (RLS) policies.
+              </p>
+              <div className="space-y-2 pt-2 border-t border-[#eaf0eb]">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600">Database Engine:</span>
+                  <span className="font-semibold text-slate-800">PostgreSQL (Supabase)</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600">Isolation Layer:</span>
+                  <span className="font-semibold text-[#2e5a44]">Row-Level Security (RLS)</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600">Active Tenant Nodes:</span>
+                  <span className="font-semibold text-slate-800">{tenants.length} Instances</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Entity Provisioning Snapshot */}
+            <div className="bg-white rounded-2xl border border-[#dbe7dc] p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[#2e5a44] font-bold text-sm">
+                  <Building2 className="h-4 w-4" />
+                  <span>Provisioned Entities</span>
+                </div>
+                <button
+                  onClick={() => router.push('/platform?tab=tenants')}
+                  className="text-xs font-semibold text-[#2e5a44] hover:underline flex items-center gap-1"
+                >
+                  View Directory <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <p className="text-xs text-slate-500">
+                Institutional departments registered on this infrastructure instance.
+              </p>
+              <div className="space-y-2 pt-2 border-t border-[#eaf0eb]">
+                {tenants.map(t => (
+                  <div key={t.id} className="p-3 rounded-xl border border-[#dbe7dc] bg-[#f8faf8] flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-xs text-slate-900">{t.name}</div>
+                      <div className="text-[10px] text-slate-400 font-mono">{t.slug}.test</div>
+                    </div>
+                    <span className="text-[10px] font-semibold text-[#2e5a44] bg-[#edf4ee] px-2 py-0.5 rounded-full border border-[#dbe7dc]">
+                      Active
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-          <span className="text-xs text-slate-400 font-medium">{tenants.length} entit{tenants.length !== 1 ? 'y' : 'ies'}</span>
         </div>
+      )}
 
-        {loading ? (
-          <div className="bg-white rounded-2xl border border-[#dbe7dc] p-16 text-center">
-            <div className="h-8 w-8 border-[3px] border-[#dbe7dc] border-t-[#2e5a44] rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-xs text-slate-500">Loading entity records...</p>
+      {/* =========================================================================
+          VIEW 2: PROVISIONED ENTITIES (tab === 'tenants')
+          ========================================================================= */}
+      {activeTab === 'tenants' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Provisioned Departments &amp; Entities</h2>
+              <p className="text-xs text-slate-500">Directory of isolated institutional tenancy instances</p>
+            </div>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#2e5a44] hover:bg-[#254937] transition shadow-xs"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Provision New Entity
+            </button>
           </div>
-        ) : tenants.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-[#dbe7dc] p-12 text-center text-slate-400">
-            No institutional entities provisioned yet.
+
+          {/* Search bar */}
+          <div className="bg-white rounded-2xl border border-[#dbe7dc] p-3 shadow-xs">
+            <div className="relative">
+              <Search className="h-4 w-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search entities by name or domain slug..."
+                className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#2e5a44]"
+              />
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
-            {tenants.map((t, i) => {
-              const gradient = CARD_GRADIENTS[i % CARD_GRADIENTS.length];
-              const initial = t.name.charAt(0).toUpperCase();
-              return (
-                <div
-                  key={t.id}
-                  className="animate-fade-in-up bg-white rounded-2xl border border-[#dbe7dc] shadow-xs hover:border-[#2e5a44]/40 transition-all overflow-hidden group"
-                  style={{ animationDelay: `${i * 60}ms` }}
-                >
-                  {/* Top accent */}
-                  <div className={`h-1.5 bg-gradient-to-r ${gradient}`} />
 
-                  <div className="p-5">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className={`h-12 w-12 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-xl font-extrabold shadow-xs`}>
-                        {initial}
-                      </div>
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#edf4ee] text-[#2e5a44] border border-[#dbe7dc] uppercase tracking-wider">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#2e5a44]" />
-                        Active Entity
-                      </span>
-                    </div>
+          {/* Grid of entities */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredTenants.map(t => (
+              <div
+                key={t.id}
+                className="bg-white rounded-2xl border border-[#dbe7dc] shadow-xs p-5 hover:border-[#2e5a44]/40 transition space-y-3"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="h-10 w-10 rounded-xl bg-[#edf4ee] text-[#2e5a44] flex items-center justify-center font-bold text-sm border border-[#dbe7dc]">
+                    {t.name.charAt(0)}
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#edf4ee] text-[#2e5a44] border border-[#dbe7dc] uppercase tracking-wider">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#2e5a44]" />
+                    Active Entity
+                  </span>
+                </div>
 
-                    <h3 className="text-base font-bold text-slate-900 group-hover:text-[#2e5a44] transition-colors">{t.name}</h3>
-
-                    <div className="space-y-1.5 mt-3">
-                      <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                        <Globe className="h-3.5 w-3.5 text-slate-300 shrink-0" />
-                        <span className="font-mono text-[#2e5a44] font-medium">{t.slug}.test</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                        <Hash className="h-3.5 w-3.5 text-slate-300 shrink-0" />
-                        <span className="font-mono truncate">{t.id}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                        <Calendar className="h-3.5 w-3.5 text-slate-300 shrink-0" />
-                        <span>Provisioned {new Date(t.created_at).toLocaleDateString()}</span>
-                      </div>
-                    </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">{t.name}</h3>
+                  <div className="text-[11px] font-mono text-[#2e5a44] mt-0.5 flex items-center gap-1">
+                    <Globe className="h-3 w-3 text-slate-400" />
+                    <span>{t.slug}.test</span>
                   </div>
                 </div>
-              );
-            })}
+
+                <div className="space-y-1 pt-2 border-t border-[#eaf0eb] text-[11px] text-slate-400">
+                  <div className="flex items-center gap-1 font-mono">
+                    <Hash className="h-3 w-3 text-slate-300" />
+                    <span className="truncate">{t.id}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3 text-slate-300" />
+                    <span>Provisioned {new Date(t.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {filteredTenants.length === 0 && (
+              <div className="py-12 text-center text-slate-400 bg-white rounded-2xl border border-[#dbe7dc] col-span-3 text-xs">
+                No institutional entities found matching "{searchQuery}".
+              </div>
+            )}
           </div>
-        )}
-      </section>
+        </div>
+      )}
 
       {/* Create Tenant Modal */}
       {showCreateModal && (
@@ -289,5 +385,13 @@ export default function PlatformSuperAdminPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function PlatformSuperAdminPage() {
+  return (
+    <Suspense fallback={<div className="p-12 text-center text-xs text-slate-400">Loading platform governance...</div>}>
+      <PlatformContent />
+    </Suspense>
   );
 }

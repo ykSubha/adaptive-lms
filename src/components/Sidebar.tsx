@@ -25,39 +25,43 @@ import {
 function NavLinksList({ role }: { role: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentTab = searchParams ? searchParams.get('tab') || 'dashboard' : 'dashboard';
+
+  const getDefaultTab = () => {
+    if (role === 'student') return 'dashboard';
+    return 'dash';
+  };
+
+  const currentTab = searchParams ? searchParams.get('tab') || getDefaultTab() : getDefaultTab();
 
   const getNavLinks = () => {
     switch (role) {
       case 'student':
         return [
           { name: 'Dashboard', href: '/student?tab=dashboard', tabKey: 'dashboard', icon: LayoutDashboard },
-          { name: 'My Courses', href: '/student?tab=courses', tabKey: 'courses', icon: BookOpen },
           { name: 'Assessments', href: '/student?tab=assessments', tabKey: 'assessments', icon: ClipboardList },
           { name: 'Learning Path', href: '/student?tab=path', tabKey: 'path', icon: Compass },
           { name: 'Recommendations', href: '/student?tab=recommendations', tabKey: 'recommendations', icon: Brain },
           { name: 'Remediation', href: '/student?tab=remediation', tabKey: 'remediation', icon: Layers },
           { name: 'My Progress', href: '/student?tab=progress', tabKey: 'progress', icon: BarChart3 },
-          { name: 'Cognitive Profile', href: '/student?tab=profile', tabKey: 'profile', icon: Award },
           { name: 'Notifications', href: '/student?tab=notifications', tabKey: 'notifications', icon: Bell },
         ];
       case 'instructor':
         return [
-          { name: 'Faculty Dashboard', href: '/instructor', tabKey: 'dash', icon: School },
-          { name: 'Assigned Courses', href: '/instructor#courses', tabKey: 'courses', icon: BookOpen },
-          { name: 'Cohort Topic Pulse', href: '/instructor#pulse', tabKey: 'pulse', icon: BarChart3 },
-          { name: 'Proctoring Review', href: '/instructor#proctoring', tabKey: 'proctoring', icon: Shield },
+          { name: 'Faculty Dashboard', href: '/instructor?tab=dash', tabKey: 'dash', icon: School },
+          { name: 'Assigned Courses', href: '/instructor?tab=courses', tabKey: 'courses', icon: BookOpen },
+          { name: 'Cohort Topic Pulse', href: '/instructor?tab=pulse', tabKey: 'pulse', icon: BarChart3 },
+          { name: 'Proctoring Review', href: '/instructor?tab=proctoring', tabKey: 'proctoring', icon: Shield },
         ];
       case 'tenant_admin':
         return [
-          { name: 'Administration Hub', href: '/admin', tabKey: 'dash', icon: UserCheck },
-          { name: 'Department Modules', href: '/admin#courses', tabKey: 'courses', icon: BookOpen },
-          { name: 'Department Roster', href: '/admin#users', tabKey: 'users', icon: GraduationCap },
+          { name: 'Administration Hub', href: '/admin?tab=dash', tabKey: 'dash', icon: UserCheck },
+          { name: 'Department Modules', href: '/admin?tab=courses', tabKey: 'courses', icon: BookOpen },
+          { name: 'Department Roster', href: '/admin?tab=users', tabKey: 'users', icon: GraduationCap },
         ];
       case 'super_admin':
         return [
-          { name: 'Multi-Tenant Governance', href: '/platform', tabKey: 'dash', icon: Shield },
-          { name: 'Provisioned Entities', href: '/platform#tenants', tabKey: 'tenants', icon: Building2 },
+          { name: 'Multi-Tenant Governance', href: '/platform?tab=dash', tabKey: 'dash', icon: Shield },
+          { name: 'Provisioned Entities', href: '/platform?tab=tenants', tabKey: 'tenants', icon: Building2 },
         ];
       default:
         return [];
@@ -70,10 +74,8 @@ function NavLinksList({ role }: { role: string }) {
     <div className="space-y-1">
       {links.map((link) => {
         const Icon = link.icon;
-        const isActive =
-          role === 'student'
-            ? pathname === '/student' && currentTab === link.tabKey
-            : pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/');
+        const targetPath = link.href.split('?')[0];
+        const isActive = pathname === targetPath && currentTab === link.tabKey;
 
         return (
           <Link

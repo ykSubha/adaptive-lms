@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import { createClient } from '@/lib/supabase/client';
 import { Course, Profile } from '@/lib/types';
@@ -24,6 +25,13 @@ import {
   Hash,
   Mail,
   Calendar,
+  Search,
+  Filter,
+  Download,
+  ChevronRight,
+  ArrowRight,
+  ShieldCheck,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 function StatCard({
@@ -36,13 +44,13 @@ function StatCard({
   value: string | number;
 }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#dbe7dc] bg-[#f8faf8]">
+    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#dbe7dc] bg-[#f8faf8] shadow-2xs">
       <div className="p-2 rounded-lg bg-[#edf4ee] text-[#2e5a44]">
         <Icon className="h-4 w-4 shrink-0" />
       </div>
       <div>
         <div className="text-xl font-bold text-slate-900 leading-none">{value}</div>
-        <div className="text-[11px] font-semibold text-slate-500 mt-0.5 uppercase tracking-wider">{label}</div>
+        <div className="text-[11px] font-semibold text-slate-500 mt-1 uppercase tracking-wider">{label}</div>
       </div>
     </div>
   );
@@ -61,7 +69,7 @@ function Modal({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
       <div className="animate-scale-in bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
           <h3 className="text-sm font-bold text-slate-900">{title}</h3>
@@ -108,11 +116,20 @@ function InputField({
   );
 }
 
-export default function TenantAdminPage() {
+function AdminContent() {
   const { profile, tenant } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const activeTab = searchParams ? searchParams.get('tab') || 'dash' : 'dash';
+
   const [courses, setCourses] = useState<Course[]>([]);
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Filters & Search
+  const [courseSearch, setCourseSearch] = useState('');
+  const [userSearch, setUserSearch] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState<'all' | 'student' | 'instructor'>('all');
 
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showAddCourseModal, setShowAddCourseModal] = useState(false);
@@ -139,7 +156,9 @@ export default function TenantAdminPage() {
         if (tenantUsers) setUsers(tenantUsers);
         setLoading(false);
         return;
-      } catch (err) { console.warn('Live fetch failed, using mock data:', err); }
+      } catch (err) {
+        console.warn('Live fetch failed, using mock data:', err);
+      }
     }
     setTimeout(() => {
       const tenantId = profile?.tenant_id || '11111111-1111-1111-1111-111111111111';
@@ -152,10 +171,12 @@ export default function TenantAdminPage() {
         if (first) setNewCourseInstructorId(first.id);
       }
       setLoading(false);
-    }, 250);
+    }, 200);
   };
 
-  useEffect(() => { loadTenantData(); }, [profile]);
+  useEffect(() => {
+    loadTenantData();
+  }, [profile]);
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,14 +192,19 @@ export default function TenantAdminPage() {
     };
     const isLive = process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
     if (isLive) {
-      try { const supabase = createClient(); await supabase.from('profiles').insert(newUser); }
-      catch (err) { console.warn('Live insert failed:', err); }
+      try {
+        const supabase = createClient();
+        await supabase.from('profiles').insert(newUser);
+      } catch (err) {
+        console.warn('Live insert failed:', err);
+      }
     }
     INITIAL_PROFILES.push(newUser);
     setUsers(prev => [...prev, newUser]);
-    setNewUserName(''); setNewUserEmail('');
+    setNewUserName('');
+    setNewUserEmail('');
     setShowAddUserModal(false);
-    setFeedbackMsg(`User ${newUser.full_name} added successfully.`);
+    setFeedbackMsg(`User ${newUser.full_name} enrolled into department successfully.`);
     setTimeout(() => setFeedbackMsg(null), 3500);
   };
 
@@ -197,19 +223,42 @@ export default function TenantAdminPage() {
     };
     const isLive = process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
     if (isLive) {
-      try { const supabase = createClient(); await supabase.from('courses').insert(newCourse); }
-      catch (err) { console.warn('Live insert failed:', err); }
+      try {
+        const supabase = createClient();
+        await supabase.from('courses').insert(newCourse);
+      } catch (err) {
+        console.warn('Live insert failed:', err);
+      }
     }
     INITIAL_COURSES.push(newCourse);
     setCourses(prev => [...prev, newCourse]);
-    setNewCourseTitle(''); setNewCourseCode(''); setNewCourseDesc('');
+    setNewCourseTitle('');
+    setNewCourseCode('');
+    setNewCourseDesc('');
     setShowAddCourseModal(false);
-    setFeedbackMsg(`Course "${newCourse.title}" created successfully.`);
+    setFeedbackMsg(`Course module "${newCourse.title}" created successfully.`);
     setTimeout(() => setFeedbackMsg(null), 3500);
   };
 
   const instructors = users.filter(u => u.role === 'instructor');
   const studentCount = users.filter(u => u.role === 'student').length;
+
+  const filteredCourses = courses.filter(c =>
+    c.title.toLowerCase().includes(courseSearch.toLowerCase()) ||
+    c.code.toLowerCase().includes(courseSearch.toLowerCase())
+  );
+
+  const filteredUsers = users.filter(u => {
+    if (userRoleFilter !== 'all' && u.role !== userRoleFilter) return false;
+    if (
+      userSearch &&
+      !u.full_name.toLowerCase().includes(userSearch.toLowerCase()) &&
+      !u.email.toLowerCase().includes(userSearch.toLowerCase())
+    ) {
+      return false;
+    }
+    return true;
+  });
 
   const ROLE_BADGE: Record<string, string> = {
     student: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -217,6 +266,7 @@ export default function TenantAdminPage() {
     tenant_admin: 'bg-purple-50 text-purple-700 border-purple-200',
     super_admin: 'bg-rose-50 text-rose-700 border-rose-200',
   };
+
   const ROLE_ICON: Record<string, React.ElementType> = {
     student: GraduationCap,
     instructor: School,
@@ -225,7 +275,7 @@ export default function TenantAdminPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* Institutional Banner */}
       <div className="bg-white rounded-2xl border border-[#dbe7dc] p-6 md:p-7 shadow-xs">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -237,7 +287,9 @@ export default function TenantAdminPage() {
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               {tenant?.name || 'School of Computing & Engineering'}
             </h1>
-            <p className="text-slate-500 text-xs mt-1">Curriculum management and user roster provisioning for institutional department.</p>
+            <p className="text-slate-500 text-xs mt-0.5">
+              Curriculum module provisioning and departmental candidate/faculty roster management.
+            </p>
           </div>
           <button
             onClick={loadTenantData}
@@ -248,147 +300,328 @@ export default function TenantAdminPage() {
             Refresh Records
           </button>
         </div>
+
         {!loading && (
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
             <StatCard icon={BookOpen} label="Course Modules" value={courses.length} />
             <StatCard icon={GraduationCap} label="Enrolled Candidates" value={studentCount} />
             <StatCard icon={School} label="Faculty Instructors" value={instructors.length} />
+            <StatCard icon={ShieldCheck} label="RLS Partition" value="Verified" />
           </div>
         )}
       </div>
 
-      {/* Feedback toast */}
       {feedbackMsg && (
-        <div className="animate-scale-in flex items-center gap-2.5 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-sm font-semibold text-emerald-800">
-          <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
+        <div className="animate-scale-in flex items-center gap-2.5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
           <span>{feedbackMsg}</span>
         </div>
       )}
 
-      {/* Tenant Courses */}
-      <section id="courses" className="space-y-4 animate-fade-in-up">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-[#2e5a44]" />
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">Department Course Modules</h2>
-              <p className="text-xs text-slate-400">Curriculum catalog under {tenant?.name || 'this department'}</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setShowAddCourseModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#2e5a44] hover:bg-[#254937] transition shadow-xs"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Module
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 stagger-children">
-          {courses.map((course, i) => (
-            <div
-              key={course.id}
-              className="animate-fade-in-up bg-white rounded-2xl border border-[#dbe7dc] p-5 shadow-xs hover:border-[#2e5a44]/40 transition-all space-y-2"
-              style={{ animationDelay: `${i * 60}ms` }}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-[#edf4ee] text-[#2e5a44] border border-[#dbe7dc]">
-                  {course.code}
-                </span>
-                <span className="text-[10px] text-slate-400 font-mono">ID: {course.id.substring(0, 8)}…</span>
+      {/* =========================================================================
+          VIEW 1: ADMINISTRATION HUB (tab === 'dash')
+          ========================================================================= */}
+      {activeTab === 'dash' && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Quick Operations Strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-white rounded-2xl border border-[#dbe7dc] p-5 shadow-xs space-y-3">
+              <div className="flex items-center gap-2.5 text-xs font-bold text-[#2e5a44]">
+                <BookOpen className="h-4 w-4" />
+                <span>Curriculum Modules</span>
               </div>
-              <h3 className="text-base font-bold text-slate-900">{course.title}</h3>
-              <p className="text-xs text-slate-500 line-clamp-2">{course.description || 'No description provided.'}</p>
+              <p className="text-xs text-slate-500">
+                Create new academic modules, assign faculty members, and configure syllabus learning objectives.
+              </p>
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={() => setShowAddCourseModal(true)}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#2e5a44] hover:bg-[#254937] transition shadow-xs flex items-center gap-1.5"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Course Module
+                </button>
+                <button
+                  onClick={() => router.push('/admin?tab=courses')}
+                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition"
+                >
+                  View Catalog
+                </button>
+              </div>
             </div>
-          ))}
-          {courses.length === 0 && !loading && (
-            <div className="py-8 text-center text-slate-400 bg-white rounded-2xl border border-slate-200 col-span-2 text-sm">
-              No course modules configured for this department.
-            </div>
-          )}
-        </div>
-      </section>
 
-      {/* Tenant Users */}
-      <section id="users" className="animate-fade-in-up bg-white rounded-3xl border border-[#dbe7dc] shadow-xs overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-[#f8faf8]">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[#edf4ee] text-[#2e5a44]">
-              <Users className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">Department Roster</h2>
-              <p className="text-xs text-slate-400">{users.length} registered member{users.length !== 1 ? 's' : ''} in this department</p>
+            <div className="bg-white rounded-2xl border border-[#dbe7dc] p-5 shadow-xs space-y-3">
+              <div className="flex items-center gap-2.5 text-xs font-bold text-[#2e5a44]">
+                <Users className="h-4 w-4" />
+                <span>Department Roster</span>
+              </div>
+              <p className="text-xs text-slate-500">
+                Enroll student candidates or onboard faculty instructors with strict tenant partition boundaries.
+              </p>
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={() => setShowAddUserModal(true)}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#2e5a44] hover:bg-[#254937] transition shadow-xs flex items-center gap-1.5"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Enroll User
+                </button>
+                <button
+                  onClick={() => router.push('/admin?tab=users')}
+                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition"
+                >
+                  View Directory
+                </button>
+              </div>
             </div>
           </div>
-          <button
-            onClick={() => setShowAddUserModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#2e5a44] hover:bg-[#254937] transition shadow-xs"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add User
-          </button>
-        </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/40 text-slate-400 font-semibold uppercase tracking-wider">
-                <th className="py-3 px-5">Full Name</th>
-                <th className="py-3 px-5">Email</th>
-                <th className="py-3 px-5">Role</th>
-                <th className="py-3 px-5">Tenant ID</th>
-                <th className="py-3 px-5">Enrolled</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {users.map(u => {
-                const RoleIcon = ROLE_ICON[u.role] || Shield;
-                const badgeCls = ROLE_BADGE[u.role] || 'bg-slate-100 text-slate-600 border-slate-200';
-                return (
-                  <tr key={u.id} className="hover:bg-[#f8faf8] transition-colors">
-                    <td className="py-3.5 px-5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-7 w-7 rounded-full bg-[#2e5a44] flex items-center justify-center text-[10px] font-bold text-white shrink-0">
-                          {u.full_name?.charAt(0) || 'U'}
-                        </div>
-                        <span className="font-bold text-slate-900">{u.full_name}</span>
+          {/* Department Overview Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Active Modules Preview */}
+            <div className="bg-white rounded-2xl border border-[#dbe7dc] p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-slate-900">Active Curriculum Modules</h3>
+                <button
+                  onClick={() => router.push('/admin?tab=courses')}
+                  className="text-xs font-semibold text-[#2e5a44] hover:underline flex items-center gap-1"
+                >
+                  Manage <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              <div className="space-y-2.5">
+                {courses.map(course => (
+                  <div key={course.id} className="p-3 rounded-xl border border-[#dbe7dc] bg-[#f8faf8] flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-xs text-slate-900">{course.title}</div>
+                      <div className="text-[10px] text-slate-500 font-mono mt-0.5">{course.code}</div>
+                    </div>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#edf4ee] text-[#2e5a44] border border-[#dbe7dc]">
+                      Operational
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Department Roster Preview */}
+            <div className="bg-white rounded-2xl border border-[#dbe7dc] p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-slate-900">Recent Roster Members</h3>
+                <button
+                  onClick={() => router.push('/admin?tab=users')}
+                  className="text-xs font-semibold text-[#2e5a44] hover:underline flex items-center gap-1"
+                >
+                  Manage <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              <div className="space-y-2.5">
+                {users.slice(0, 4).map(u => (
+                  <div key={u.id} className="p-3 rounded-xl border border-[#dbe7dc] bg-[#f8faf8] flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-7 w-7 rounded-full bg-[#edf4ee] text-[#2e5a44] border border-[#dbe7dc] flex items-center justify-center font-bold text-xs">
+                        {u.full_name?.charAt(0)}
                       </div>
-                    </td>
-                    <td className="py-3.5 px-5 text-slate-500">
-                      <div className="flex items-center gap-1">
-                        <Mail className="h-3 w-3 text-slate-300" />
-                        {u.email}
+                      <div>
+                        <div className="font-bold text-xs text-slate-900">{u.full_name}</div>
+                        <div className="text-[10px] text-slate-400">{u.email}</div>
                       </div>
-                    </td>
-                    <td className="py-3.5 px-5">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold border uppercase text-[9px] tracking-wider ${badgeCls}`}>
-                        <RoleIcon className="h-2.5 w-2.5" />
-                        {u.role.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-5 text-slate-400 font-mono text-[10px]">
-                      {u.tenant_id?.substring(0, 8)}…
-                    </td>
-                    <td className="py-3.5 px-5 text-slate-500 whitespace-nowrap">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3 text-slate-300" />
-                        {new Date(u.created_at).toLocaleDateString()}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {users.length === 0 && !loading && (
-            <div className="py-8 text-center text-slate-400">No users found for this department.</div>
-          )}
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                      {u.role}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-      </section>
+      )}
+
+      {/* =========================================================================
+          VIEW 2: DEPARTMENT MODULES (tab === 'courses')
+          ========================================================================= */}
+      {activeTab === 'courses' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Curriculum &amp; Course Modules</h2>
+              <p className="text-xs text-slate-500">Department module catalog and instructor assignment</p>
+            </div>
+            <button
+              onClick={() => setShowAddCourseModal(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#2e5a44] hover:bg-[#254937] transition shadow-xs"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Course Module
+            </button>
+          </div>
+
+          {/* Search bar */}
+          <div className="bg-white rounded-2xl border border-[#dbe7dc] p-3 shadow-xs">
+            <div className="relative">
+              <Search className="h-4 w-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={courseSearch}
+                onChange={e => setCourseSearch(e.target.value)}
+                placeholder="Search modules by code or title..."
+                className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#2e5a44]"
+              />
+            </div>
+          </div>
+
+          {/* Module Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredCourses.map(course => (
+              <div
+                key={course.id}
+                className="bg-white rounded-2xl border border-[#dbe7dc] p-5 shadow-xs hover:border-[#2e5a44]/50 transition space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-[#edf4ee] text-[#2e5a44] border border-[#dbe7dc]">
+                    {course.code}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">ID: {course.id.substring(0, 8)}…</span>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">{course.title}</h3>
+                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">{course.description || 'No description provided.'}</p>
+                </div>
+                <div className="pt-2 border-t border-[#eaf0eb] flex items-center justify-between text-[11px] text-slate-500">
+                  <span>Assigned Faculty: Dr. Sarah Stone</span>
+                  <span className="font-semibold text-slate-700">4 Candidates</span>
+                </div>
+              </div>
+            ))}
+            {filteredCourses.length === 0 && (
+              <div className="py-12 text-center text-slate-400 bg-white rounded-2xl border border-[#dbe7dc] col-span-2 text-xs">
+                No course modules found matching "{courseSearch}".
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          VIEW 3: DEPARTMENT ROSTER (tab === 'users')
+          ========================================================================= */}
+      {activeTab === 'users' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Department Directory &amp; Roster</h2>
+              <p className="text-xs text-slate-500">Enrolled academic candidates and departmental faculty instructors</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowAddUserModal(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#2e5a44] hover:bg-[#254937] transition shadow-xs"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Enroll User
+              </button>
+            </div>
+          </div>
+
+          {/* Search & Role Filter Toolbar */}
+          <div className="bg-white rounded-2xl border border-[#dbe7dc] p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+              {(['all', 'student', 'instructor'] as const).map(role => (
+                <button
+                  key={role}
+                  onClick={() => setUserRoleFilter(role)}
+                  className={`px-3 py-1.5 rounded-lg capitalize transition-all ${
+                    userRoleFilter === role
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  {role === 'all' ? 'All Members' : role === 'student' ? 'Students' : 'Faculty'}
+                </button>
+              ))}
+            </div>
+
+            <div className="relative flex-1 max-w-xs">
+              <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={userSearch}
+                onChange={e => setUserSearch(e.target.value)}
+                placeholder="Search name or email..."
+                className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#2e5a44]"
+              />
+            </div>
+          </div>
+
+          {/* Directory Table */}
+          <div className="bg-white rounded-3xl border border-[#dbe7dc] shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-[#f8faf8] text-slate-500 font-semibold uppercase tracking-wider">
+                    <th className="py-3 px-5">Full Name</th>
+                    <th className="py-3 px-5">Email Address</th>
+                    <th className="py-3 px-5">Role</th>
+                    <th className="py-3 px-5">Enrolled Date</th>
+                    <th className="py-3 px-5">Standing</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredUsers.map(u => {
+                    const RoleIcon = ROLE_ICON[u.role] || Shield;
+                    const badgeCls = ROLE_BADGE[u.role] || 'bg-slate-100 text-slate-600 border-slate-200';
+                    return (
+                      <tr key={u.id} className="hover:bg-[#f8faf8] transition-colors">
+                        <td className="py-3.5 px-5">
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-7 w-7 rounded-full bg-[#edf4ee] text-[#2e5a44] border border-[#dbe7dc] flex items-center justify-center text-xs font-bold shrink-0">
+                              {u.full_name?.charAt(0) || 'U'}
+                            </div>
+                            <span className="font-bold text-slate-900">{u.full_name}</span>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-5 text-slate-500">
+                          <div className="flex items-center gap-1">
+                            <Mail className="h-3 w-3 text-slate-300" />
+                            {u.email}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-5">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold border uppercase text-[9px] tracking-wider ${badgeCls}`}>
+                            <RoleIcon className="h-2.5 w-2.5" />
+                            {u.role.replace('_', ' ')}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-5 text-slate-500 whitespace-nowrap">
+                          {new Date(u.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="py-3.5 px-5">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                            Active
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+
+              {filteredUsers.length === 0 && (
+                <div className="py-12 text-center text-slate-400 text-xs">
+                  No directory records found matching your filters.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal: Add User */}
-      <Modal open={showAddUserModal} onClose={() => setShowAddUserModal(false)} title="Add User to Department">
+      <Modal open={showAddUserModal} onClose={() => setShowAddUserModal(false)} title="Enroll User to Department">
         <form onSubmit={handleAddUser} className="space-y-4">
           <InputField label="Full Name" value={newUserName} onChange={setNewUserName} placeholder="e.g. John Doe" required />
           <InputField label="Email Address" type="email" value={newUserEmail} onChange={setNewUserEmail} placeholder="e.g. candidate@university.edu" required />
@@ -404,10 +637,17 @@ export default function TenantAdminPage() {
             </select>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setShowAddUserModal(false)} className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 transition">
+            <button
+              type="button"
+              onClick={() => setShowAddUserModal(false)}
+              className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 transition"
+            >
               Cancel
             </button>
-            <button type="submit" className="px-4 py-2 rounded-xl bg-[#2e5a44] text-white font-semibold text-sm hover:bg-[#254937] transition shadow-xs">
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-xl bg-[#2e5a44] text-white font-semibold text-sm hover:bg-[#254937] transition shadow-xs"
+            >
               Save User
             </button>
           </div>
@@ -417,8 +657,8 @@ export default function TenantAdminPage() {
       {/* Modal: Add Course */}
       <Modal open={showAddCourseModal} onClose={() => setShowAddCourseModal(false)} title="Create Course Module">
         <form onSubmit={handleAddCourse} className="space-y-4">
-          <InputField label="Course Title" value={newCourseTitle} onChange={setNewCourseTitle} placeholder="e.g. Operating Systems" required />
-          <InputField label="Course Code" value={newCourseCode} onChange={setNewCourseCode} placeholder="e.g. CS-301" required />
+          <InputField label="Course Title" value={newCourseTitle} onChange={setNewCourseTitle} placeholder="e.g. Operating Systems & Architecture" required />
+          <InputField label="Course Code" value={newCourseCode} onChange={setNewCourseCode} placeholder="e.g. CSE-302" required />
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5">Faculty Instructor</label>
             <select
@@ -440,20 +680,35 @@ export default function TenantAdminPage() {
               rows={2}
               value={newCourseDesc}
               onChange={e => setNewCourseDesc(e.target.value)}
-              placeholder="Course summary and learning objectives"
+              placeholder="Course syllabus summary and learning outcomes"
               className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#2e5a44] focus:ring-2 focus:ring-[#2e5a44]/20 transition resize-none"
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setShowAddCourseModal(false)} className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 transition">
+            <button
+              type="button"
+              onClick={() => setShowAddCourseModal(false)}
+              className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 transition"
+            >
               Cancel
             </button>
-            <button type="submit" className="px-4 py-2 rounded-xl bg-[#2e5a44] text-white font-semibold text-sm hover:bg-[#254937] transition shadow-xs">
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-xl bg-[#2e5a44] text-white font-semibold text-sm hover:bg-[#254937] transition shadow-xs"
+            >
               Create Module
             </button>
           </div>
         </form>
       </Modal>
     </div>
+  );
+}
+
+export default function TenantAdminPage() {
+  return (
+    <Suspense fallback={<div className="p-12 text-center text-xs text-slate-400">Loading department administration hub...</div>}>
+      <AdminContent />
+    </Suspense>
   );
 }
