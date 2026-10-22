@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import {
   GraduationCap,
@@ -14,34 +14,50 @@ import {
   Building2,
   BookOpen,
   LayoutDashboard,
+  ClipboardList,
+  Compass,
+  Brain,
+  Layers,
+  Award,
+  Bell,
 } from 'lucide-react';
 
-export default function Sidebar() {
+function NavLinksList({ role }: { role: string }) {
   const pathname = usePathname();
-  const { profile, tenant, signOut } = useAuth();
-  const role = profile?.role || 'student';
+  const searchParams = useSearchParams();
+  const currentTab = searchParams ? searchParams.get('tab') || 'dashboard' : 'dashboard';
 
   const getNavLinks = () => {
     switch (role) {
       case 'student':
         return [
-          { name: 'Curriculum & Mastery', href: '/student', icon: LayoutDashboard },
+          { name: 'Dashboard', href: '/student?tab=dashboard', tabKey: 'dashboard', icon: LayoutDashboard },
+          { name: 'My Courses', href: '/student?tab=courses', tabKey: 'courses', icon: BookOpen },
+          { name: 'Assessments', href: '/student?tab=assessments', tabKey: 'assessments', icon: ClipboardList },
+          { name: 'Learning Path', href: '/student?tab=path', tabKey: 'path', icon: Compass },
+          { name: 'Recommendations', href: '/student?tab=recommendations', tabKey: 'recommendations', icon: Brain },
+          { name: 'Remediation', href: '/student?tab=remediation', tabKey: 'remediation', icon: Layers },
+          { name: 'My Progress', href: '/student?tab=progress', tabKey: 'progress', icon: BarChart3 },
+          { name: 'Cognitive Profile', href: '/student?tab=profile', tabKey: 'profile', icon: Award },
+          { name: 'Notifications', href: '/student?tab=notifications', tabKey: 'notifications', icon: Bell },
         ];
       case 'instructor':
         return [
-          { name: 'Courses & Evaluation', href: '/instructor', icon: School },
-          { name: 'Topic Mastery Pulse', href: '/instructor#pulse', icon: BarChart3 },
-          { name: 'Proctoring Review', href: '/instructor#proctoring', icon: Shield },
+          { name: 'Faculty Dashboard', href: '/instructor', tabKey: 'dash', icon: School },
+          { name: 'Assigned Courses', href: '/instructor#courses', tabKey: 'courses', icon: BookOpen },
+          { name: 'Cohort Topic Pulse', href: '/instructor#pulse', tabKey: 'pulse', icon: BarChart3 },
+          { name: 'Proctoring Review', href: '/instructor#proctoring', tabKey: 'proctoring', icon: Shield },
         ];
       case 'tenant_admin':
         return [
-          { name: 'Institutional Overview', href: '/admin', icon: UserCheck },
-          { name: 'Course Directory', href: '/admin#courses', icon: BookOpen },
-          { name: 'User Directory', href: '/admin#users', icon: GraduationCap },
+          { name: 'Administration Hub', href: '/admin', tabKey: 'dash', icon: UserCheck },
+          { name: 'Department Modules', href: '/admin#courses', tabKey: 'courses', icon: BookOpen },
+          { name: 'Department Roster', href: '/admin#users', tabKey: 'users', icon: GraduationCap },
         ];
       case 'super_admin':
         return [
-          { name: 'Tenants Infrastructure', href: '/platform', icon: Shield },
+          { name: 'Multi-Tenant Governance', href: '/platform', tabKey: 'dash', icon: Shield },
+          { name: 'Provisioned Entities', href: '/platform#tenants', tabKey: 'tenants', icon: Building2 },
         ];
       default:
         return [];
@@ -51,58 +67,73 @@ export default function Sidebar() {
   const links = getNavLinks();
 
   return (
+    <div className="space-y-1">
+      {links.map((link) => {
+        const Icon = link.icon;
+        const isActive =
+          role === 'student'
+            ? pathname === '/student' && currentTab === link.tabKey
+            : pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/');
+
+        return (
+          <Link
+            key={link.name}
+            href={link.href}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
+              isActive
+                ? 'bg-[#edf4ee] text-[#254d37] border border-[#c8dec9] shadow-2xs'
+                : 'text-slate-600 hover:bg-[#f4f7f4] hover:text-slate-900'
+            }`}
+          >
+            <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-[#254d37]' : 'text-slate-400'}`} />
+            <span>{link.name}</span>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function Sidebar() {
+  const { profile, tenant, signOut } = useAuth();
+  const role = profile?.role || 'student';
+
+  const roleLabelMap: Record<string, string> = {
+    student: 'Student',
+    instructor: 'Instructor',
+    tenant_admin: 'Department Admin',
+    super_admin: 'Platform Admin',
+  };
+
+  return (
     <aside className="w-64 bg-white text-slate-700 flex flex-col shrink-0 border-r border-[#e2ede3]">
-      {/* Enterprise Institutional Header */}
-      <div className="h-16 px-5 flex items-center border-b border-[#e2ede3] gap-3 bg-white">
-        <div className="h-9 w-9 rounded-lg bg-[#2e5a44] text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
-          <BookOpen className="h-5 w-5" />
+      {/* User Profile Card Header (Matching User Uploaded Design) */}
+      <div className="p-4 border-b border-[#e2ede3] bg-[#f8faf8] flex items-center gap-3">
+        <div className="h-10 w-10 rounded-full bg-[#edf4ee] text-[#2e5a44] font-bold text-sm flex items-center justify-center border border-[#dbe7dc] shrink-0 shadow-2xs">
+          {profile?.full_name?.charAt(0) || 'A'}
         </div>
-        <div className="overflow-hidden">
-          <div className="text-xs font-bold text-slate-900 tracking-tight uppercase">
-            Academic Portal
+        <div className="overflow-hidden flex-1">
+          <div className="text-sm font-bold text-slate-900 truncate">
+            {profile?.full_name || 'Academic Candidate'}
           </div>
-          <div className="text-[11px] text-[#2e5a44] font-medium flex items-center gap-1 truncate">
-            <Building2 className="h-3 w-3 shrink-0" />
-            <span className="truncate">{tenant?.name || 'Engineering Faculty'}</span>
+          <div className="inline-flex items-center px-2 py-0.5 mt-0.5 rounded-full text-[10px] font-semibold bg-[#edf4ee] text-[#2e5a44] border border-[#dbe7dc]">
+            {roleLabelMap[role] || 'Student'}
           </div>
         </div>
       </div>
 
       {/* Navigation Links */}
       <nav className="flex-1 p-3.5 space-y-1 overflow-y-auto">
-        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">
-          Academic Workspace
-        </div>
-        {links.map((link) => {
-          const Icon = link.icon;
-          const isActive = pathname === link.href;
-          return (
-            <Link
-              key={link.name}
-              href={link.href}
-              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
-                isActive
-                  ? 'bg-[#edf4ee] text-[#254d37] border border-[#c8dec9] shadow-2xs'
-                  : 'text-slate-600 hover:bg-[#f4f7f4] hover:text-slate-900'
-              }`}
-            >
-              <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-[#254d37]' : 'text-slate-400'}`} />
-              <span>{link.name}</span>
-            </Link>
-          );
-        })}
+        <Suspense fallback={<div className="p-4 text-xs text-slate-400">Loading navigation...</div>}>
+          <NavLinksList role={role} />
+        </Suspense>
       </nav>
 
-      {/* User Info & Logout Footer */}
-      <div className="p-3.5 border-t border-[#e2ede3] bg-[#f7faf7]">
-        <div className="flex items-center gap-2.5 mb-2.5 px-1">
-          <div className="h-8 w-8 rounded-lg bg-[#e2ede4] text-[#254d37] flex items-center justify-center font-bold text-xs border border-[#c8dec9]">
-            {profile?.full_name?.charAt(0) || 'U'}
-          </div>
-          <div className="overflow-hidden flex-1">
-            <div className="text-xs font-bold text-slate-900 truncate">{profile?.full_name || 'User'}</div>
-            <div className="text-[11px] text-slate-500 truncate font-mono">{profile?.email}</div>
-          </div>
+      {/* Institutional Entity & Sign Out Footer */}
+      <div className="p-3.5 border-t border-[#e2ede3] bg-[#f8faf8] space-y-2.5">
+        <div className="px-1 flex items-center gap-2 text-xs text-slate-600 truncate">
+          <Building2 className="h-3.5 w-3.5 text-[#2e5a44] shrink-0" />
+          <span className="truncate font-medium">{tenant?.name || 'School of Computing'}</span>
         </div>
         <button
           onClick={() => signOut()}

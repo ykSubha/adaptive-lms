@@ -15,10 +15,6 @@ export default function TopNav() {
           <Building2 className="h-3.5 w-3.5 mr-1.5 text-[#2e5a44]" />
           <span>{tenant?.name || 'Faculty of Engineering & Technology'}</span>
         </div>
-        <div className="hidden lg:flex items-center text-[11px] text-slate-500 gap-1 bg-[#f4f7f4] px-2.5 py-1 rounded-md border border-[#dbe7dc]">
-          <ShieldCheck className="h-3.5 w-3.5 text-[#2e5a44]" />
-          <span>Role-Based Tenant Partition</span>
-        </div>
       </div>
 
       {/* Right: User Information & Explicit Sign Out */}
