@@ -1,8 +1,8 @@
 import { Tenant, Profile, Course, Topic, CognitiveProfile, Question, ProctoringEvent, ClassTopicPulse } from './types';
 
 export const INITIAL_TENANTS: Tenant[] = [
-  { id: '11111111-1111-1111-1111-111111111111', name: 'Alpha Academy', slug: 'alpha', created_at: '2026-01-01T00:00:00Z' },
-  { id: '22222222-2222-2222-2222-222222222222', name: 'Beta Institute', slug: 'beta', created_at: '2026-01-01T00:00:00Z' }
+  { id: '11111111-1111-1111-1111-111111111111', name: 'School of Computing & Engineering', slug: 'alpha', created_at: '2026-01-01T00:00:00Z' },
+  { id: '22222222-2222-2222-2222-222222222222', name: 'Department of Information Sciences', slug: 'beta', created_at: '2026-01-01T00:00:00Z' }
 ];
 
 export const INITIAL_PROFILES: Profile[] = [
@@ -10,7 +10,7 @@ export const INITIAL_PROFILES: Profile[] = [
     id: '33333333-3333-3333-3333-333333333331',
     tenant_id: '11111111-1111-1111-1111-111111111111',
     email: 'student@alpha.test',
-    full_name: 'Alice Student',
+    full_name: 'Alice Vance',
     role: 'student',
     created_at: '2026-01-01T00:00:00Z'
   },
@@ -18,7 +18,7 @@ export const INITIAL_PROFILES: Profile[] = [
     id: '33333333-3333-3333-3333-333333333332',
     tenant_id: '22222222-2222-2222-2222-222222222222',
     email: 'student@beta.test',
-    full_name: 'Bob Beta',
+    full_name: 'Bob Chen',
     role: 'student',
     created_at: '2026-01-01T00:00:00Z'
   },
@@ -34,7 +34,7 @@ export const INITIAL_PROFILES: Profile[] = [
     id: '55555555-5555-5555-5555-555555555551',
     tenant_id: '11111111-1111-1111-1111-111111111111',
     email: 'admin@alpha.test',
-    full_name: 'Arthur Admin',
+    full_name: 'Arthur Mitchell',
     role: 'tenant_admin',
     created_at: '2026-01-01T00:00:00Z'
   },
@@ -42,7 +42,7 @@ export const INITIAL_PROFILES: Profile[] = [
     id: '99999999-9999-9999-9999-999999999999',
     tenant_id: null,
     email: 'super@demo.test',
-    full_name: 'Sam Superadmin',
+    full_name: 'Samuel Hayes',
     role: 'super_admin',
     created_at: '2026-01-01T00:00:00Z'
   }
@@ -380,12 +380,12 @@ export const INITIAL_PROCTORING_EVENTS: ProctoringEvent[] = [
     tenant_id: '11111111-1111-1111-1111-111111111111',
     course_id: 'c1111111-1111-1111-1111-111111111111',
     student_id: '33333333-3333-3333-3333-333333333331',
-    flag_type: 'tab_switch',
-    confidence: 0.85,
+    flag_type: 'mobile_detected',
+    confidence: 0.94,
     severity: 'high',
     status: 'pending',
-    created_at: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-    student: { full_name: 'Alice Student', email: 'student@alpha.test' },
+    created_at: new Date(Date.now() - 6 * 60 * 1000).toISOString(),
+    student: { full_name: 'Alice Vance', email: 'student@alpha.test' },
     course: { title: 'Computer Science Core (DSA, ML & Data Science)', code: 'CSE-401' }
   },
   {
@@ -393,12 +393,12 @@ export const INITIAL_PROCTORING_EVENTS: ProctoringEvent[] = [
     tenant_id: '11111111-1111-1111-1111-111111111111',
     course_id: 'c1111111-1111-1111-1111-111111111111',
     student_id: '33333333-3333-3333-3333-333333333331',
-    flag_type: 'focus_loss',
-    confidence: 0.60,
+    flag_type: 'eye_diversion',
+    confidence: 0.78,
     severity: 'medium',
     status: 'pending',
-    created_at: new Date(Date.now() - 18 * 60 * 1000).toISOString(),
-    student: { full_name: 'Alice Student', email: 'student@alpha.test' },
+    created_at: new Date(Date.now() - 14 * 60 * 1000).toISOString(),
+    student: { full_name: 'Alice Vance', email: 'student@alpha.test' },
     course: { title: 'Computer Science Core (DSA, ML & Data Science)', code: 'CSE-401' }
   },
   {
@@ -410,8 +410,21 @@ export const INITIAL_PROCTORING_EVENTS: ProctoringEvent[] = [
     confidence: 0.85,
     severity: 'high',
     status: 'pending',
-    created_at: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
-    student: { full_name: 'Alice Student', email: 'student@alpha.test' },
+    created_at: new Date(Date.now() - 22 * 60 * 1000).toISOString(),
+    student: { full_name: 'Alice Vance', email: 'student@alpha.test' },
+    course: { title: 'Computer Science Core (DSA, ML & Data Science)', code: 'CSE-401' }
+  },
+  {
+    id: 'f1111111-1111-1111-1111-111111111104',
+    tenant_id: '11111111-1111-1111-1111-111111111111',
+    course_id: 'c1111111-1111-1111-1111-111111111111',
+    student_id: '33333333-3333-3333-3333-333333333331',
+    flag_type: 'focus_loss',
+    confidence: 0.60,
+    severity: 'medium',
+    status: 'confirmed',
+    created_at: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
+    student: { full_name: 'Alice Vance', email: 'student@alpha.test' },
     course: { title: 'Computer Science Core (DSA, ML & Data Science)', code: 'CSE-401' }
   }
 ];

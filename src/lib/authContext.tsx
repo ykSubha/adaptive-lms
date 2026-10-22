@@ -12,7 +12,6 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password?: string) => Promise<{ error?: string; role?: UserRole }>;
   signOut: () => Promise<void>;
-  switchSeedAccount: (email: string) => Promise<UserRole>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -21,23 +20,32 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   signIn: async () => ({}),
   signOut: async () => {},
-  switchSeedAccount: async () => 'student',
 });
 
-function getInitialProfile(): Profile {
+function getInitialProfile(): Profile | null {
   if (typeof window !== 'undefined') {
-    const urlParam = new URLSearchParams(window.location.search).get('demo_user');
+    const urlParams = new URLSearchParams(window.location.search);
+    const queryEmail = urlParams.get('demo_user');
+
     const cookieMatch = document.cookie.match(/demo_user_email=([^;]+)/);
     const cookieEmail = cookieMatch ? decodeURIComponent(cookieMatch[1].trim()) : null;
-    const savedEmail = localStorage.getItem('adaptive_lms_demo_user');
-    const email = urlParam || cookieEmail || savedEmail || 'student@alpha.test';
-    return INITIAL_PROFILES.find(p => p.email.toLowerCase() === email.toLowerCase()) || INITIAL_PROFILES[0];
+    const savedEmail = localStorage.getItem('auth_user_email');
+    const email = queryEmail || cookieEmail || savedEmail;
+    if (email) {
+      const found = INITIAL_PROFILES.find(p => p.email.toLowerCase() === email.toLowerCase());
+      if (found) {
+        document.cookie = `demo_user_email=${found.email}; path=/; max-age=604800`;
+        document.cookie = `demo_user_role=${found.role}; path=/; max-age=604800`;
+        localStorage.setItem('auth_user_email', found.email);
+        return found;
+      }
+    }
   }
-  return INITIAL_PROFILES[0];
+  return null;
 }
 
-function getInitialTenant(prof: Profile): Tenant | null {
-  if (!prof.tenant_id) return null;
+function getInitialTenant(prof: Profile | null): Tenant | null {
+  if (!prof?.tenant_id) return null;
   return INITIAL_TENANTS.find(t => t.id === prof.tenant_id) || null;
 }
 
@@ -45,10 +53,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isLive = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder'));
   const [profile, setProfile] = useState<Profile | null>(() => (isLive ? null : getInitialProfile()));
   const [tenant, setTenant] = useState<Tenant | null>(() => (isLive ? null : getInitialTenant(getInitialProfile())));
-  const [loading, setLoading] = useState(isLive);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Helper to resolve profile from cookie or local state
   const loadUser = async () => {
     const supabase = createClient();
 
@@ -75,36 +82,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } else {
               setTenant(null);
             }
+            document.cookie = `demo_user_email=${profileData.email}; path=/; max-age=604800`;
+            document.cookie = `demo_user_role=${profileData.role}; path=/; max-age=604800`;
             setLoading(false);
             return;
           }
         }
       } catch (e) {
-        console.warn('Live Supabase auth check failed, falling back to local session', e);
+        console.warn('Live Supabase auth check failed:', e);
       }
+      setLoading(false);
+      return;
     }
 
-    // Check URL param, demo cookie, or localStorage
-    let activeEmail = 'student@alpha.test';
-    if (typeof window !== 'undefined') {
-      const urlParam = new URLSearchParams(window.location.search).get('demo_user');
-      const cookieMatch = document.cookie.match(/demo_user_email=([^;]+)/);
-      const cookieEmail = cookieMatch ? decodeURIComponent(cookieMatch[1].trim()) : null;
-      const savedEmail = localStorage.getItem('adaptive_lms_demo_user');
-      activeEmail = urlParam || cookieEmail || savedEmail || 'student@alpha.test';
-      if (urlParam) {
-        localStorage.setItem('adaptive_lms_demo_user', urlParam);
-      }
-    }
-    const foundProfile = INITIAL_PROFILES.find(p => p.email.toLowerCase() === activeEmail.toLowerCase()) || INITIAL_PROFILES[0];
-    const foundTenant = foundProfile.tenant_id ? INITIAL_TENANTS.find(t => t.id === foundProfile.tenant_id) || null : null;
-
-    setProfile(foundProfile);
-    setTenant(foundTenant);
-    if (typeof document !== 'undefined') {
-      document.cookie = `demo_user_email=${foundProfile.email}; path=/; max-age=604800`;
-      document.cookie = `demo_user_role=${foundProfile.role}; path=/; max-age=604800`;
-    }
+    const current = getInitialProfile();
+    setProfile(current);
+    setTenant(getInitialTenant(current));
     setLoading(false);
   };
 
@@ -137,7 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (profError || !profileData) {
           setLoading(false);
-          return { error: 'Profile not found for this user.' };
+          return { error: 'Profile not found for this user account.' };
         }
 
         setProfile(profileData);
@@ -154,19 +147,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         document.cookie = `demo_user_email=${profileData.email}; path=/; max-age=604800`;
         document.cookie = `demo_user_role=${profileData.role}; path=/; max-age=604800`;
+        localStorage.setItem('auth_user_email', profileData.email);
         setLoading(false);
         return { role: profileData.role };
       }
     }
 
-    // Local / Demo seed sign in
-    const match = INITIAL_PROFILES.find(p => p.email.toLowerCase() === email.toLowerCase());
+    // Standard Seed Directory verification
+    const match = INITIAL_PROFILES.find(p => p.email.toLowerCase() === email.trim().toLowerCase());
     if (match) {
       setProfile(match);
       const matchTenant = match.tenant_id ? INITIAL_TENANTS.find(t => t.id === match.tenant_id) || null : null;
       setTenant(matchTenant);
       if (typeof window !== 'undefined') {
-        localStorage.setItem('adaptive_lms_demo_user', match.email);
+        localStorage.setItem('auth_user_email', match.email);
         document.cookie = `demo_user_email=${match.email}; path=/; max-age=604800`;
         document.cookie = `demo_user_role=${match.role}; path=/; max-age=604800`;
       }
@@ -175,45 +169,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     setLoading(false);
-    return { error: 'User email not found in seed profiles.' };
-  };
-
-  const switchSeedAccount = async (email: string): Promise<UserRole> => {
-    const res = await signIn(email);
-    const role = res.role || 'student';
-    const redirectMap: Record<UserRole, string> = {
-      student: '/student',
-      instructor: '/instructor',
-      tenant_admin: '/admin',
-      super_admin: '/platform',
-    };
-    router.push(redirectMap[role]);
-    return role;
+    return { error: 'Invalid credentials. User email not recognized in directory.' };
   };
 
   const signOut = async () => {
     const isLive = process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
     if (isLive) {
-      const supabase = createClient();
-      await supabase.auth.signOut();
+      try {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.warn('Supabase sign out error:', e);
+      }
     }
     setProfile(null);
     setTenant(null);
     if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_user_email');
       localStorage.removeItem('adaptive_lms_demo_user');
-      document.cookie = 'demo_user_email=; path=/; max-age=0';
-      document.cookie = 'demo_user_role=; path=/; max-age=0';
+      document.cookie = 'demo_user_email=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'demo_user_role=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     }
     router.push('/login');
   };
 
   return (
-    <AuthContext.Provider value={{ profile, tenant, loading, signIn, signOut, switchSeedAccount }}>
+    <AuthContext.Provider
+      value={{
+        profile,
+        tenant,
+        loading,
+        signIn,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }

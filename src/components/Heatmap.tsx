@@ -34,9 +34,9 @@ export default function Heatmap({ topics, cognitiveProfiles }: HeatmapProps) {
         let Icon = AlertCircle;
 
         if (trust >= 0.70) {
-          cardBg = 'bg-emerald-50/50 border-emerald-200 text-emerald-950';
-          barColor = 'bg-emerald-500';
-          badgeColor = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+          cardBg = 'bg-[#edf5ee] border-[#c8dec9] text-[#1e3d2c]';
+          barColor = 'bg-[#3d6b52]';
+          badgeColor = 'bg-[#deecdf] text-[#234832] border-[#b6d6b8]';
           statusLabel = 'Mastered';
           Icon = CheckCircle2;
         } else if (trust >= 0.40) {

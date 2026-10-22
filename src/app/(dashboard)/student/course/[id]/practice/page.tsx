@@ -152,37 +152,37 @@ export default function StudentPracticePage() {
         </button>
         <Link
           href={`/student/course/${courseId}/quiz`}
-          className="inline-flex items-center px-4 py-2 rounded-xl text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 transition shadow-xs"
+          className="inline-flex items-center px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#2e5a44] hover:bg-[#254937] transition shadow-xs"
         >
           <Brain className="h-3.5 w-3.5 mr-1.5" />
-          Start 5-Question Quiz
+          Proctored Assessment
           <ArrowRight className="h-3.5 w-3.5 ml-1" />
         </Link>
       </div>
 
-      {/* Weakest Topic Header Card (Refined Academic Navy / Slate Style) */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 md:p-7 shadow-xs space-y-3">
+      {/* Weakest Topic Header Card */}
+      <div className="bg-white border border-[#dbe7dc] rounded-2xl p-6 md:p-7 shadow-xs space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-rose-50 border border-rose-200 text-xs font-bold text-rose-800 uppercase tracking-wide">
               <Flame className="h-3.5 w-3.5 text-rose-600" />
-              Target Remediation Topic
+              Target Remediation Focus
             </div>
             <h1 className="text-xl md:text-2xl font-bold text-slate-900">
-              Weakest Topic: {weakestTopic?.name || 'Loading Topic...'}
+              Focus Topic: {weakestTopic?.name || 'Loading Topic...'}
             </h1>
             <p className="text-xs text-slate-500 max-w-xl">
               Course: <strong>{course?.title || 'Computer Science Core'}</strong> ({course?.code || 'CSE-401'}).
-              Recommendations are dynamically ranked using token similarity from <code className="bg-slate-100 px-1 py-0.5 rounded text-[11px]">lib/recommend.ts</code>.
+              Remediation questions ranked dynamically using term-frequency similarity heuristics from <code className="bg-slate-100 px-1 py-0.5 rounded text-[11px]">lib/recommend.ts</code>.
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center shrink-0 min-w-[140px]">
-            <div className="text-[11px] uppercase font-bold text-slate-500">Current Trust</div>
+          <div className="p-4 rounded-xl bg-[#f8faf8] border border-[#dbe7dc] text-center shrink-0 min-w-[140px]">
+            <div className="text-[11px] uppercase font-bold text-slate-500">Mastery Index</div>
             <div className="text-2xl font-black text-rose-600 mt-0.5">
               {(weakestScore * 100).toFixed(0)}%
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">EMA: {weakestScore.toFixed(3)}</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">Moving Average: {weakestScore.toFixed(3)}</div>
           </div>
         </div>
       </div>
@@ -191,33 +191,33 @@ export default function StudentPracticePage() {
       <section className="space-y-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Target className="h-4 w-4 text-blue-700" />
-            <h2 className="text-base font-bold text-slate-900">Practice These Next</h2>
+            <Target className="h-4 w-4 text-[#2e5a44]" />
+            <h2 className="text-base font-bold text-slate-900">Targeted Practice Sequence</h2>
           </div>
           <span className="text-xs text-slate-500 font-medium">
-            Sorted by relevance &amp; difficulty affinity
+            Ranked by syllabus relevance &amp; difficulty affinity
           </span>
         </div>
 
         {loading ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-            <RefreshCw className="h-8 w-8 text-blue-700 animate-spin mx-auto mb-3" />
-            <p className="text-xs text-slate-500 font-medium">Computing similarity matrix over question texts...</p>
+          <div className="bg-white rounded-2xl border border-[#dbe7dc] p-12 text-center">
+            <RefreshCw className="h-8 w-8 text-[#2e5a44] animate-spin mx-auto mb-3" />
+            <p className="text-xs text-slate-500 font-medium">Analyzing question bank affinity...</p>
           </div>
         ) : recommendations.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400">
+          <div className="bg-white rounded-2xl border border-[#dbe7dc] p-12 text-center text-slate-400">
             No practice recommendations found for this course.
           </div>
         ) : (
           recommendations.map((rec, index) => {
             const q = rec.question;
             const isExpanded = expandedQuestionId === q.id;
-            const rankBadge = index === 0 ? 'bg-blue-50 text-blue-800 border-blue-200' : 'bg-slate-100 text-slate-700 border-slate-200';
+            const rankBadge = index === 0 ? 'bg-[#edf4ee] text-[#2e5a44] border-[#dbe7dc]' : 'bg-slate-100 text-slate-700 border-slate-200';
 
             return (
               <div
                 key={q.id}
-                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs hover:border-blue-300 transition space-y-3"
+                className="bg-white rounded-2xl border border-[#dbe7dc] p-5 shadow-2xs hover:border-[#2e5a44]/40 transition space-y-3"
               >
                 {/* Recommendation Item Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -235,8 +235,8 @@ export default function StudentPracticePage() {
                 </div>
 
                 {/* Reason Banner */}
-                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-start space-x-2">
-                  <Sparkles className="h-3.5 w-3.5 text-blue-700 shrink-0 mt-0.5" />
+                <div className="p-2.5 rounded-lg bg-[#f8faf8] border border-[#dbe7dc] text-xs text-slate-600 flex items-start space-x-2">
+                  <Target className="h-3.5 w-3.5 text-[#2e5a44] shrink-0 mt-0.5" />
                   <span>{rec.reason}</span>
                 </div>
 
@@ -249,7 +249,7 @@ export default function StudentPracticePage() {
                 <div className="pt-1">
                   <button
                     onClick={() => setExpandedQuestionId(isExpanded ? null : q.id)}
-                    className="inline-flex items-center text-xs font-semibold text-blue-700 hover:text-blue-900 transition"
+                    className="inline-flex items-center text-xs font-semibold text-[#2e5a44] hover:text-[#254937] transition"
                   >
                     <HelpCircle className="h-3.5 w-3.5 mr-1" />
                     {isExpanded ? 'Hide Options & Explanation' : 'Inspect Practice Options & Explanation'}

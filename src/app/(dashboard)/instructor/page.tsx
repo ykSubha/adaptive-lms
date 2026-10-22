@@ -47,6 +47,15 @@ function StatChip({
   );
 }
 
+const FLAG_METADATA: Record<string, { label: string; badge: string }> = {
+  mobile_detected: { label: 'Mobile Device Detected', badge: 'bg-rose-50 text-rose-800 border-rose-200' },
+  eye_diversion: { label: 'Eye Diversion / Head Tilt', badge: 'bg-amber-50 text-amber-800 border-amber-200' },
+  multiple_faces: { label: 'Multiple Faces in Frame', badge: 'bg-rose-50 text-rose-800 border-rose-200' },
+  face_missing: { label: 'Candidate Face Missing', badge: 'bg-rose-50 text-rose-800 border-rose-200' },
+  tab_switch: { label: 'Tab Switch', badge: 'bg-purple-50 text-purple-800 border-purple-200' },
+  focus_loss: { label: 'Window Blur / Focus Loss', badge: 'bg-slate-100 text-slate-700 border-slate-200' },
+};
+
 export default function InstructorPage() {
   const { profile } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
@@ -129,17 +138,17 @@ export default function InstructorPage() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
       {/* Institutional Banner */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-7 shadow-xs">
+      <div className="bg-white rounded-2xl border border-[#dbe7dc] p-6 md:p-7 shadow-xs">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-blue-700 text-xs font-bold uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-2 text-[#2e5a44] text-xs font-bold uppercase tracking-wider mb-1">
               <School className="h-4 w-4" />
-              <span>Instructor Portal</span>
+              <span>Faculty Examination &amp; Proctoring Audit</span>
             </div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              Welcome, {profile?.full_name?.split(' ')[0] || 'Instructor'}
+              {profile?.full_name || 'Faculty Member'}
             </h1>
-            <p className="text-slate-500 text-xs mt-1">Real-time topic pulse analytics & student proctoring audit trails</p>
+            <p className="text-slate-500 text-xs mt-1">Department topic pulse analytics and real-time candidate proctoring audit review</p>
           </div>
           <button
             onClick={loadInstructorData}
@@ -147,17 +156,17 @@ export default function InstructorPage() {
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition shrink-0"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh Data
+            Refresh Records
           </button>
         </div>
 
         {/* Quick stats row */}
         {!loading && (
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatChip label="Courses" value={courses.length} />
-            <StatChip label="Topics Tracked" value={pulseData.length} />
-            <StatChip label="Avg Class Trust" value={`${(avgClassTrust * 100).toFixed(0)}%`} />
-            <StatChip label="Pending Flags" value={pendingCount} badge={pendingCount > 0 ? `${pendingCount} new` : undefined} />
+            <StatChip label="Assigned Modules" value={courses.length} />
+            <StatChip label="Syllabus Topics Tracked" value={pulseData.length} />
+            <StatChip label="Avg Cohort Mastery" value={`${(avgClassTrust * 100).toFixed(0)}%`} />
+            <StatChip label="Audit Flags" value={pendingCount} badge={pendingCount > 0 ? `${pendingCount} review pending` : undefined} />
           </div>
         )}
       </div>
@@ -165,23 +174,23 @@ export default function InstructorPage() {
       {/* Assigned Courses */}
       <section className="animate-fade-in-up">
         <div className="flex items-center gap-2 mb-4">
-          <BookOpen className="h-5 w-5 text-blue-600" />
+          <BookOpen className="h-5 w-5 text-[#2e5a44]" />
           <h2 className="text-lg font-bold text-slate-900">Assigned Courses</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 stagger-children">
           {courses.map((course, i) => (
             <div
               key={course.id}
-              className="animate-fade-in-up bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md hover:border-blue-200 transition-all"
+              className="animate-fade-in-up bg-white rounded-2xl border border-[#dbe7dc] p-5 shadow-xs hover:border-[#2e5a44]/40 transition-all"
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-[#edf4ee] text-[#2e5a44] border border-[#dbe7dc]">
                   {course.code}
                 </span>
-                <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Active
+                <div className="flex items-center gap-1 text-[10px] text-[#2e5a44] font-semibold bg-[#edf4ee] px-2 py-0.5 rounded-full border border-[#dbe7dc]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#2e5a44]" />
+                  Active Course
                 </div>
               </div>
               <h3 className="text-base font-bold text-slate-900 mt-1">{course.title}</h3>
@@ -190,22 +199,22 @@ export default function InstructorPage() {
           ))}
           {courses.length === 0 && !loading && (
             <div className="p-8 text-center text-slate-400 bg-white rounded-2xl border border-slate-200 col-span-2">
-              No courses assigned to your instructor profile.
+              No courses assigned to your faculty profile.
             </div>
           )}
         </div>
       </section>
 
       {/* Class Topic Pulse */}
-      <section className="animate-fade-in-up bg-white rounded-3xl border border-slate-200 p-6 md:p-8 shadow-sm">
+      <section className="animate-fade-in-up bg-white rounded-3xl border border-[#dbe7dc] p-6 md:p-8 shadow-xs">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+            <div className="p-2 rounded-xl bg-[#edf4ee] text-[#2e5a44]">
               <BarChart3 className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Class Topic Pulse</h2>
-              <p className="text-xs text-slate-400">Aggregated EMA trust scores per topic (<code className="bg-slate-100 px-1 py-0.5 rounded text-[11px]">class_topic_pulse</code> view)</p>
+              <h2 className="text-lg font-bold text-slate-900">Cohort Topic Pulse</h2>
+              <p className="text-xs text-slate-400">Aggregated EMA mastery scores per syllabus topic (<code className="bg-slate-100 px-1 py-0.5 rounded text-[11px]">class_topic_pulse</code> view)</p>
             </div>
           </div>
           <span className="hidden sm:inline text-xs text-slate-400 font-medium">Exponential Moving Average</span>
@@ -222,10 +231,10 @@ export default function InstructorPage() {
               let TrIcon = TrendingDown;
               let trColor = 'text-rose-500';
               if (topic.avg_trust >= 0.70) {
-                barColor = 'bg-gradient-to-r from-emerald-500 to-emerald-400';
-                badgeCls = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                barColor = 'bg-gradient-to-r from-[#2e5a44] to-[#3d6651]';
+                badgeCls = 'bg-[#edf4ee] text-[#2e5a44] border-[#dbe7dc]';
                 TrIcon = TrendingUp;
-                trColor = 'text-emerald-500';
+                trColor = 'text-[#2e5a44]';
               } else if (topic.avg_trust >= 0.45) {
                 barColor = 'bg-gradient-to-r from-amber-500 to-amber-400';
                 badgeCls = 'bg-amber-50 text-amber-700 border-amber-200';
@@ -241,7 +250,7 @@ export default function InstructorPage() {
                       <span className="font-semibold text-slate-800">{topic.topic_name}</span>
                       <span className="text-slate-400 hidden sm:inline">
                         <Users className="h-3 w-3 inline mr-0.5" />
-                        {topic.student_count} {topic.student_count === 1 ? 'student' : 'students'}
+                        {topic.student_count} {topic.student_count === 1 ? 'candidate' : 'candidates'}
                       </span>
                     </div>
                     <span className={`px-2.5 py-0.5 rounded-lg font-bold border text-xs ${badgeCls}`}>
@@ -262,15 +271,15 @@ export default function InstructorPage() {
       </section>
 
       {/* Proctoring Review */}
-      <section className="animate-fade-in-up bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <section className="animate-fade-in-up bg-white rounded-3xl border border-[#dbe7dc] shadow-xs overflow-hidden">
         <div className="p-6 border-b border-slate-100 flex flex-wrap items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-amber-50 text-amber-700">
               <ShieldAlert className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Proctoring Review</h2>
-              <p className="text-xs text-slate-400">Flags sorted by severity. Review and update status.</p>
+              <h2 className="text-lg font-bold text-slate-900">Proctoring Audit Review</h2>
+              <p className="text-xs text-slate-400">Computer vision and environment flags sorted by severity. Review and update audit disposition.</p>
             </div>
             {highSeverityCount > 0 && (
               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">
@@ -288,7 +297,7 @@ export default function InstructorPage() {
                 onClick={() => setFilterStatus(tab)}
                 className={`px-3 py-1.5 rounded-lg capitalize transition-all ${
                   filterStatus === tab
-                    ? 'bg-white text-slate-900 shadow-sm'
+                    ? 'bg-white text-slate-900 shadow-xs'
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
@@ -307,51 +316,52 @@ export default function InstructorPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider">
-                <th className="py-3 px-5">Student</th>
-                <th className="py-3 px-4">Flag Type</th>
+              <tr className="border-b border-slate-100 bg-[#f8faf8] text-slate-500 font-semibold uppercase tracking-wider">
+                <th className="py-3 px-5">Candidate</th>
+                <th className="py-3 px-4">Audit Violation</th>
                 <th className="py-3 px-4">Confidence</th>
                 <th className="py-3 px-4">Severity</th>
-                <th className="py-3 px-4">Time</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+                <th className="py-3 px-4">Recorded</th>
+                <th className="py-3 px-4">Audit Status</th>
+                <th className="py-3 px-4 text-right">Disposition</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-100">
               {filteredEvents.map(flag => {
                 const isUpdating = updatingId === flag.id;
 
                 const severityMap: Record<string, string> = {
                   high: 'bg-rose-100 text-rose-800 border-rose-200',
                   medium: 'bg-amber-100 text-amber-800 border-amber-200',
-                  low: 'bg-blue-100 text-blue-800 border-blue-200',
+                  low: 'bg-[#edf4ee] text-[#2e5a44] border-[#dbe7dc]',
                 };
                 const statusMap: Record<string, string> = {
                   pending: 'bg-amber-50 text-amber-700 border-amber-200',
                   confirmed: 'bg-rose-50 text-rose-700 border-rose-200',
                   dismissed: 'bg-slate-100 text-slate-500 border-slate-200',
                 };
+                const meta = FLAG_METADATA[flag.flag_type] || { label: flag.flag_type, badge: 'bg-slate-100 text-slate-700 border-slate-200' };
 
                 return (
-                  <tr key={flag.id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={flag.id} className="hover:bg-[#f8faf8] transition-colors">
                     <td className="py-3.5 px-5">
-                      <div className="font-semibold text-slate-900">{flag.student?.full_name || 'Student'}</div>
+                      <div className="font-semibold text-slate-900">{flag.student?.full_name || 'Candidate'}</div>
                       <div className="text-[10px] text-slate-400 mt-0.5">{flag.student?.email || flag.student_id.substring(0, 8)}</div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="font-medium text-slate-700">
-                        {flag.flag_type === 'tab_switch' ? 'Tab Switch' : 'Focus Loss'}
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md border text-[11px] font-semibold ${meta.badge}`}>
+                        {meta.label}
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-1.5">
                         <div className="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-indigo-500 rounded-full"
+                            className="h-full bg-[#2e5a44] rounded-full"
                             style={{ width: `${(flag.confidence * 100).toFixed(0)}%` }}
                           />
                         </div>
-                        <span className="text-slate-600">{(flag.confidence * 100).toFixed(0)}%</span>
+                        <span className="text-slate-600 font-medium">{(flag.confidence * 100).toFixed(0)}%</span>
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
@@ -383,7 +393,7 @@ export default function InstructorPage() {
                         <button
                           onClick={() => handleReviewFlag(flag.id, 'confirmed')}
                           disabled={isUpdating || flag.status === 'confirmed'}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-40 transition shadow-sm shadow-rose-200"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-40 transition shadow-xs shadow-rose-200"
                         >
                           <Check className="h-3 w-3" />
                           Confirm

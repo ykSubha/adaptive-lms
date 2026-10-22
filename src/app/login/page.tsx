@@ -3,59 +3,11 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
-import { BookOpen, Shield, GraduationCap, School, UserCheck, ArrowRight, Lock, CheckCircle2 } from 'lucide-react';
-
-const SEED_ACCOUNTS = [
-  {
-    email: 'student@alpha.test',
-    role: 'student',
-    roleLabel: 'Student (Alpha)',
-    tenant: 'Alpha Academy',
-    desc: 'Enrolled in Computer Science Core (DSA, ML & DS); adaptive quiz & heatmap',
-    icon: GraduationCap,
-    badgeColor: 'bg-emerald-50 text-emerald-800 border-emerald-200'
-  },
-  {
-    email: 'student@beta.test',
-    role: 'student',
-    roleLabel: 'Student (Beta)',
-    tenant: 'Beta Institute',
-    desc: 'Enrolled in Intro to Python; strictly isolated from Alpha tenant courses',
-    icon: GraduationCap,
-    badgeColor: 'bg-teal-50 text-teal-800 border-teal-200'
-  },
-  {
-    email: 'instructor@alpha.test',
-    role: 'instructor',
-    roleLabel: 'Instructor (Alpha)',
-    tenant: 'Alpha Academy',
-    desc: 'Teaches CS Core; Class Topic Pulse analytics & Proctoring Flag Review',
-    icon: School,
-    badgeColor: 'bg-blue-50 text-blue-800 border-blue-200'
-  },
-  {
-    email: 'admin@alpha.test',
-    role: 'tenant_admin',
-    roleLabel: 'Tenant Admin (Alpha)',
-    tenant: 'Alpha Academy',
-    desc: 'Manages Alpha tenant users & courses; isolated from Beta tenant',
-    icon: UserCheck,
-    badgeColor: 'bg-purple-50 text-purple-800 border-purple-200'
-  },
-  {
-    email: 'super@demo.test',
-    role: 'super_admin',
-    roleLabel: 'Super Admin',
-    tenant: 'Platform Root',
-    desc: 'Manages platform tenants; strictly prohibited from seeing student/course data',
-    icon: Shield,
-    badgeColor: 'bg-rose-50 text-rose-800 border-rose-200'
-  }
-];
+import { BookOpen, ArrowRight, Lock, KeyRound, Mail, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signIn, switchSeedAccount } = useAuth();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -64,7 +16,7 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      setError('Please enter your email.');
+      setError('Please enter your institutional email address.');
       return;
     }
     setLoading(true);
@@ -88,121 +40,116 @@ export default function LoginPage() {
     router.push(redirectMap[role] || '/student');
   };
 
-  const handleQuickSeed = async (seedEmail: string) => {
-    setLoading(true);
+  const fillCredential = (demoEmail: string) => {
+    setEmail(demoEmail);
+    setPassword('demo-session-key');
     setError(null);
-    await switchSeedAccount(seedEmail);
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#f4f7f4] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-700 text-white shadow-xs">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#2e5a44] text-white shadow-xs">
           <BookOpen className="h-7 w-7" />
         </div>
-        <h2 className="mt-3.5 text-2xl font-extrabold text-slate-900 tracking-tight">
-          Adaptive Learning Portal
+        <h2 className="mt-4 text-2xl font-bold text-slate-900 tracking-tight">
+          Academic Portal
         </h2>
-        <p className="mt-1 text-xs text-slate-600 font-medium">
-          Multi-Tenant Academic Management with Adaptive Diagnostic Assessments
+        <p className="mt-1 text-xs text-slate-600">
+          Institutional Curriculum Management & Examination Platform
         </p>
       </div>
 
-      <div className="mt-7 sm:mx-auto sm:w-full sm:max-w-xl">
-        <div className="bg-white py-8 px-6 shadow-xs border border-slate-200 rounded-2xl sm:px-10">
+      <div className="mt-7 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-6 shadow-xs border border-[#dbe7dc] rounded-2xl sm:px-8">
           {error && (
             <div className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-start space-x-2">
-              <span className="font-bold">Error:</span>
-              <span>{error}</span>
+              <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
+              <div>
+                <span className="font-bold">Authentication Failed:</span> {error}
+              </div>
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Institutional Email Address
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Institutional Email
               </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="e.g. student@alpha.test"
-                className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs shadow-2xs placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
-              />
+              <div className="relative rounded-xl border border-slate-200 focus-within:border-[#2e5a44] focus-within:ring-1 focus-within:ring-[#2e5a44]">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <Mail className="h-4 w-4" />
+                </div>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@institution.test"
+                  className="w-full pl-9 pr-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 bg-transparent rounded-xl focus:outline-none"
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Password
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Password / Access Key
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password (optional in seed demo mode)"
-                className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs shadow-2xs placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
-              />
+              <div className="relative rounded-xl border border-slate-200 focus-within:border-[#2e5a44] focus-within:ring-1 focus-within:ring-[#2e5a44]">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <KeyRound className="h-4 w-4" />
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  className="w-full pl-9 pr-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 bg-transparent rounded-xl focus:outline-none"
+                />
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center items-center py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 disabled:opacity-50 transition shadow-xs"
+              className="w-full flex justify-center items-center py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-[#2e5a44] hover:bg-[#254937] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2e5a44] disabled:opacity-50 transition shadow-xs mt-2"
             >
-              {loading ? 'Authenticating...' : 'Sign In to Portal'}
+              {loading ? 'Authenticating...' : 'Sign In'}
               <ArrowRight className="ml-2 h-3.5 w-3.5" />
             </button>
           </form>
 
-          <div className="mt-7">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-[10px] uppercase">
-                <span className="bg-white px-3 text-slate-400 font-bold tracking-wider">
-                  One-Click Test Account Access
-                </span>
-              </div>
+          {/* Clean Institutional Account Reference */}
+          <div className="mt-6 pt-5 border-t border-[#eaf0eb]">
+            <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2">
+              Institutional User Directory
             </div>
-
-            <div className="mt-4 space-y-2">
-              {SEED_ACCOUNTS.map((acc) => {
-                const Icon = acc.icon;
-                return (
-                  <button
-                    key={acc.email}
-                    type="button"
-                    onClick={() => handleQuickSeed(acc.email)}
-                    disabled={loading}
-                    className="w-full text-left p-3 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/40 transition flex items-center justify-between group"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 rounded-lg bg-slate-100 text-slate-600 group-hover:bg-blue-100 group-hover:text-blue-700 transition">
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs font-bold text-slate-900">{acc.email}</span>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold border ${acc.badgeColor}`}>
-                            {acc.roleLabel}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-500 mt-0.5">{acc.desc}</p>
-                      </div>
-                    </div>
-                    <ArrowRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition shrink-0" />
-                  </button>
-                );
-              })}
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { email: 'student@alpha.test', label: 'Student' },
+                { email: 'student@beta.test', label: 'Alt Student' },
+                { email: 'instructor@alpha.test', label: 'Faculty' },
+                { email: 'admin@alpha.test', label: 'Admin' },
+                { email: 'super@demo.test', label: 'Platform Root' },
+              ].map(item => (
+                <button
+                  key={item.email}
+                  type="button"
+                  onClick={() => fillCredential(item.email)}
+                  className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-[#f4f7f4] hover:bg-[#e4efe5] text-[#254d37] border border-[#dbe7dc] transition"
+                  title={`Click to fill ${item.email}`}
+                >
+                  {item.email}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
-        <div className="mt-6 text-center text-xs text-slate-500 space-y-1">
-          <p>
-            <Lock className="inline h-3.5 w-3.5 mr-1 text-slate-400" />
-            Row-Level Security (RLS) active across all tenants and roles.
+        <div className="mt-5 text-center text-xs text-slate-500">
+          <p className="flex items-center justify-center gap-1">
+            <Lock className="h-3.5 w-3.5 text-slate-400" />
+            <span>Strict Row-Level Security Enforced</span>
           </p>
         </div>
       </div>

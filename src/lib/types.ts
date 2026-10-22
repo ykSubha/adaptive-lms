@@ -64,12 +64,20 @@ export interface Question {
   topic_name?: string;
 }
 
+export type ProctorFlagType =
+  | 'tab_switch'
+  | 'focus_loss'
+  | 'eye_diversion'
+  | 'mobile_detected'
+  | 'multiple_faces'
+  | 'face_missing';
+
 export interface ProctoringEvent {
   id: string;
   tenant_id: string;
   course_id: string;
   student_id: string;
-  flag_type: 'tab_switch' | 'focus_loss';
+  flag_type: ProctorFlagType;
   confidence: number;
   severity: 'low' | 'medium' | 'high';
   status: 'pending' | 'dismissed' | 'confirmed';

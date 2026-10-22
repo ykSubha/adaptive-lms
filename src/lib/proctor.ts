@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { createClient } from './supabase/client';
 import { INITIAL_PROCTORING_EVENTS } from './mockData';
 
+import { ProctorFlagType } from './types';
+
 interface UseProctoringOptions {
   courseId: string;
   studentId?: string;
@@ -14,13 +16,13 @@ interface UseProctoringOptions {
 interface ProctoringState {
   eventCount: number;
   lastEvent: string | null;
-  activeFlag: 'tab_switch' | 'focus_loss' | null;
+  activeFlag: ProctorFlagType | null;
 }
 
 /**
  * useProctoring Hook
  *
- * Listens to document visibility changes and window blur/focus events.
+ * Listens to document visibility changes, blur events, and camera vision flags.
  * Inserts events into proctoring_events without selecting or returning data (due to student RLS).
  * Debounces events to avoid duplicate flooding.
  */
@@ -40,7 +42,7 @@ export function useProctoring({
   const DEBOUNCE_MS = 2500;
 
   const logEvent = useCallback(
-    async (flagType: 'tab_switch' | 'focus_loss', confidence: number, severity: 'low' | 'medium' | 'high') => {
+    async (flagType: ProctorFlagType, confidence: number, severity: 'low' | 'medium' | 'high') => {
       if (!enabled || !courseId) return;
 
       const now = Date.now();

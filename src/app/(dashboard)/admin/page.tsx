@@ -36,8 +36,8 @@ function StatCard({
   value: string | number;
 }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/80">
-      <div className="p-2 rounded-lg bg-blue-50 text-blue-700">
+    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#dbe7dc] bg-[#f8faf8]">
+      <div className="p-2 rounded-lg bg-[#edf4ee] text-[#2e5a44]">
         <Icon className="h-4 w-4 shrink-0" />
       </div>
       <div>
@@ -85,7 +85,6 @@ function InputField({
   onChange,
   placeholder,
   required,
-  accentColor = 'indigo',
 }: {
   label: string;
   type?: string;
@@ -93,7 +92,6 @@ function InputField({
   onChange: (v: string) => void;
   placeholder?: string;
   required?: boolean;
-  accentColor?: string;
 }) {
   return (
     <div>
@@ -104,7 +102,7 @@ function InputField({
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className={`w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-${accentColor}-500 focus:ring-2 focus:ring-${accentColor}-500/20 transition`}
+        className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#2e5a44] focus:ring-2 focus:ring-[#2e5a44]/20 transition"
       />
     </div>
   );
@@ -229,17 +227,17 @@ export default function TenantAdminPage() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
       {/* Institutional Banner */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-7 shadow-xs">
+      <div className="bg-white rounded-2xl border border-[#dbe7dc] p-6 md:p-7 shadow-xs">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-blue-700 text-xs font-bold uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-2 text-[#2e5a44] text-xs font-bold uppercase tracking-wider mb-1">
               <UserCheck className="h-4 w-4" />
-              <span>Tenant Administrator Hub</span>
+              <span>Department Administration Hub</span>
             </div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              {tenant?.name || 'Alpha Academy'} Management
+              {tenant?.name || 'School of Computing & Engineering'}
             </h1>
-            <p className="text-slate-500 text-xs mt-1">Manage courses and user rosters exclusively for your tenant.</p>
+            <p className="text-slate-500 text-xs mt-1">Curriculum management and user roster provisioning for institutional department.</p>
           </div>
           <button
             onClick={loadTenantData}
@@ -247,14 +245,14 @@ export default function TenantAdminPage() {
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition shrink-0"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            Refresh Records
           </button>
         </div>
         {!loading && (
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <StatCard icon={BookOpen} label="Courses" value={courses.length} />
-            <StatCard icon={GraduationCap} label="Students" value={studentCount} />
-            <StatCard icon={School} label="Instructors" value={instructors.length} />
+            <StatCard icon={BookOpen} label="Course Modules" value={courses.length} />
+            <StatCard icon={GraduationCap} label="Enrolled Candidates" value={studentCount} />
+            <StatCard icon={School} label="Faculty Instructors" value={instructors.length} />
           </div>
         )}
       </div>
@@ -271,18 +269,18 @@ export default function TenantAdminPage() {
       <section id="courses" className="space-y-4 animate-fade-in-up">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-blue-700" />
+            <BookOpen className="h-5 w-5 text-[#2e5a44]" />
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Tenant Courses</h2>
-              <p className="text-xs text-slate-400">Published under {tenant?.name || 'this tenant'}</p>
+              <h2 className="text-lg font-bold text-slate-900">Department Course Modules</h2>
+              <p className="text-xs text-slate-400">Curriculum catalog under {tenant?.name || 'this department'}</p>
             </div>
           </div>
           <button
             onClick={() => setShowAddCourseModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-blue-700 hover:bg-blue-800 transition shadow-sm"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#2e5a44] hover:bg-[#254937] transition shadow-xs"
           >
             <Plus className="h-3.5 w-3.5" />
-            Add Course
+            Add Module
           </button>
         </div>
 
@@ -290,11 +288,11 @@ export default function TenantAdminPage() {
           {courses.map((course, i) => (
             <div
               key={course.id}
-              className="animate-fade-in-up bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md hover:border-blue-200 transition-all space-y-2"
+              className="animate-fade-in-up bg-white rounded-2xl border border-[#dbe7dc] p-5 shadow-xs hover:border-[#2e5a44]/40 transition-all space-y-2"
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-[#edf4ee] text-[#2e5a44] border border-[#dbe7dc]">
                   {course.code}
                 </span>
                 <span className="text-[10px] text-slate-400 font-mono">ID: {course.id.substring(0, 8)}…</span>
@@ -305,27 +303,27 @@ export default function TenantAdminPage() {
           ))}
           {courses.length === 0 && !loading && (
             <div className="py-8 text-center text-slate-400 bg-white rounded-2xl border border-slate-200 col-span-2 text-sm">
-              No courses configured for this tenant.
+              No course modules configured for this department.
             </div>
           )}
         </div>
       </section>
 
       {/* Tenant Users */}
-      <section id="users" className="animate-fade-in-up bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+      <section id="users" className="animate-fade-in-up bg-white rounded-3xl border border-[#dbe7dc] shadow-xs overflow-hidden">
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-[#f8faf8]">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-700">
+            <div className="p-2 rounded-xl bg-[#edf4ee] text-[#2e5a44]">
               <Users className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Tenant Users</h2>
-              <p className="text-xs text-slate-400">{users.length} registered member{users.length !== 1 ? 's' : ''} in this tenant</p>
+              <h2 className="text-lg font-bold text-slate-900">Department Roster</h2>
+              <p className="text-xs text-slate-400">{users.length} registered member{users.length !== 1 ? 's' : ''} in this department</p>
             </div>
           </div>
           <button
             onClick={() => setShowAddUserModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-blue-700 hover:bg-blue-800 transition shadow-sm"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#2e5a44] hover:bg-[#254937] transition shadow-xs"
           >
             <Plus className="h-3.5 w-3.5" />
             Add User
@@ -339,19 +337,19 @@ export default function TenantAdminPage() {
                 <th className="py-3 px-5">Full Name</th>
                 <th className="py-3 px-5">Email</th>
                 <th className="py-3 px-5">Role</th>
-                <th className="py-3 px-5">Tenant</th>
-                <th className="py-3 px-5">Joined</th>
+                <th className="py-3 px-5">Tenant ID</th>
+                <th className="py-3 px-5">Enrolled</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-100">
               {users.map(u => {
                 const RoleIcon = ROLE_ICON[u.role] || Shield;
                 const badgeCls = ROLE_BADGE[u.role] || 'bg-slate-100 text-slate-600 border-slate-200';
                 return (
-                  <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={u.id} className="hover:bg-[#f8faf8] transition-colors">
                     <td className="py-3.5 px-5">
                       <div className="flex items-center gap-2.5">
-                        <div className="h-7 w-7 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+                        <div className="h-7 w-7 rounded-full bg-[#2e5a44] flex items-center justify-center text-[10px] font-bold text-white shrink-0">
                           {u.full_name?.charAt(0) || 'U'}
                         </div>
                         <span className="font-bold text-slate-900">{u.full_name}</span>
@@ -384,22 +382,22 @@ export default function TenantAdminPage() {
             </tbody>
           </table>
           {users.length === 0 && !loading && (
-            <div className="py-8 text-center text-slate-400">No users found for this tenant.</div>
+            <div className="py-8 text-center text-slate-400">No users found for this department.</div>
           )}
         </div>
       </section>
 
       {/* Modal: Add User */}
-      <Modal open={showAddUserModal} onClose={() => setShowAddUserModal(false)} title="Add User to Tenant">
+      <Modal open={showAddUserModal} onClose={() => setShowAddUserModal(false)} title="Add User to Department">
         <form onSubmit={handleAddUser} className="space-y-4">
-          <InputField label="Full Name" value={newUserName} onChange={setNewUserName} placeholder="e.g. John Doe" required accentColor="blue" />
-          <InputField label="Email Address" type="email" value={newUserEmail} onChange={setNewUserEmail} placeholder="e.g. john@alpha.test" required accentColor="blue" />
+          <InputField label="Full Name" value={newUserName} onChange={setNewUserName} placeholder="e.g. John Doe" required />
+          <InputField label="Email Address" type="email" value={newUserEmail} onChange={setNewUserEmail} placeholder="e.g. candidate@university.edu" required />
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5">Role</label>
             <select
               value={newUserRole}
               onChange={e => setNewUserRole(e.target.value as any)}
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white transition"
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-[#2e5a44] focus:ring-2 focus:ring-[#2e5a44]/20 bg-white transition"
             >
               <option value="student">Student</option>
               <option value="instructor">Instructor</option>
@@ -409,7 +407,7 @@ export default function TenantAdminPage() {
             <button type="button" onClick={() => setShowAddUserModal(false)} className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 transition">
               Cancel
             </button>
-            <button type="submit" className="px-4 py-2 rounded-xl bg-blue-700 text-white font-semibold text-sm hover:bg-blue-800 transition shadow-sm">
+            <button type="submit" className="px-4 py-2 rounded-xl bg-[#2e5a44] text-white font-semibold text-sm hover:bg-[#254937] transition shadow-xs">
               Save User
             </button>
           </div>
@@ -417,16 +415,16 @@ export default function TenantAdminPage() {
       </Modal>
 
       {/* Modal: Add Course */}
-      <Modal open={showAddCourseModal} onClose={() => setShowAddCourseModal(false)} title="Create Tenant Course">
+      <Modal open={showAddCourseModal} onClose={() => setShowAddCourseModal(false)} title="Create Course Module">
         <form onSubmit={handleAddCourse} className="space-y-4">
-          <InputField label="Course Title" value={newCourseTitle} onChange={setNewCourseTitle} placeholder="e.g. Operating Systems" required accentColor="blue" />
-          <InputField label="Course Code" value={newCourseCode} onChange={setNewCourseCode} placeholder="e.g. CS-301" required accentColor="blue" />
+          <InputField label="Course Title" value={newCourseTitle} onChange={setNewCourseTitle} placeholder="e.g. Operating Systems" required />
+          <InputField label="Course Code" value={newCourseCode} onChange={setNewCourseCode} placeholder="e.g. CS-301" required />
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">Instructor</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Faculty Instructor</label>
             <select
               value={newCourseInstructorId}
               onChange={e => setNewCourseInstructorId(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white transition"
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-[#2e5a44] focus:ring-2 focus:ring-[#2e5a44]/20 bg-white transition"
             >
               {instructors.map(ins => (
                 <option key={ins.id} value={ins.id}>{ins.full_name} ({ins.email})</option>
@@ -443,15 +441,15 @@ export default function TenantAdminPage() {
               value={newCourseDesc}
               onChange={e => setNewCourseDesc(e.target.value)}
               placeholder="Course summary and learning objectives"
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition resize-none"
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#2e5a44] focus:ring-2 focus:ring-[#2e5a44]/20 transition resize-none"
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setShowAddCourseModal(false)} className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 transition">
               Cancel
             </button>
-            <button type="submit" className="px-4 py-2 rounded-xl bg-blue-700 text-white font-semibold text-sm hover:bg-blue-800 transition shadow-sm">
-              Create Course
+            <button type="submit" className="px-4 py-2 rounded-xl bg-[#2e5a44] text-white font-semibold text-sm hover:bg-[#254937] transition shadow-xs">
+              Create Module
             </button>
           </div>
         </form>

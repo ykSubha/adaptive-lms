@@ -87,7 +87,7 @@ create table if not exists public.proctoring_events (
     tenant_id uuid not null references public.tenants(id) on delete cascade,
     course_id uuid not null references public.courses(id) on delete cascade,
     student_id uuid not null references public.profiles(id) on delete cascade,
-    flag_type text not null check (flag_type in ('tab_switch', 'focus_loss')),
+    flag_type text not null check (flag_type in ('tab_switch', 'focus_loss', 'eye_diversion', 'mobile_detected', 'multiple_faces', 'face_missing')),
     confidence numeric(3, 2) not null default 0.85,
     severity text not null default 'medium' check (severity in ('low', 'medium', 'high')),
     status text not null default 'pending' check (status in ('pending', 'dismissed', 'confirmed')),
