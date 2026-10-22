@@ -85,7 +85,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@institution.test"
+                  placeholder="faculty@bitsathy.ac.in"
                   className="w-full pl-9 pr-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 bg-transparent rounded-xl focus:outline-none"
                 />
               </div>
@@ -126,11 +126,10 @@ export default function LoginPage() {
             </div>
             <div className="flex flex-wrap gap-1.5">
               {[
-                { email: 'student@alpha.test', label: 'Student' },
-                { email: 'student@beta.test', label: 'Alt Student' },
-                { email: 'instructor@alpha.test', label: 'Faculty' },
-                { email: 'admin@alpha.test', label: 'Admin' },
-                { email: 'super@demo.test', label: 'Platform Root' },
+                { email: 'student@bitsathy.ac.in', label: 'Student' },
+                { email: 'faculty@bitsathy.ac.in', label: 'Faculty' },
+                { email: 'admin@bitsathy.ac.in', label: 'Admin' },
+                { email: 'superadmin@platform.gov', label: 'Platform Root' },
               ].map(item => (
                 <button
                   key={item.email}

@@ -70,7 +70,7 @@ export function useProctoring({
         severity,
         status: 'pending' as const,
         created_at: new Date().toISOString(),
-        student: { full_name: 'Alice Student', email: 'student@alpha.test' },
+        student: { full_name: 'Alice Vance', email: 'alice.vance@cse.bitsathy.ac.in' },
         course: { title: 'Data Structures & Algorithms', code: 'CS-201' },
       };
       INITIAL_PROCTORING_EVENTS.unshift(demoEvent);

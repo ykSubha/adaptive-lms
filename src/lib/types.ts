@@ -5,6 +5,11 @@ export interface Tenant {
   name: string;
   slug: string;
   created_at: string;
+  domain?: string;
+  cluster?: string;
+  partition_node?: string;
+  security_mode?: string;
+  storage_usage?: string;
 }
 
 export interface Profile {

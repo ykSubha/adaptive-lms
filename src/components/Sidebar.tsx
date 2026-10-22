@@ -20,6 +20,9 @@ import {
   Layers,
   Award,
   Bell,
+  ShieldCheck,
+  Activity,
+  Lock,
 } from 'lucide-react';
 
 function NavLinksList({ role }: { role: string }) {
@@ -62,6 +65,9 @@ function NavLinksList({ role }: { role: string }) {
         return [
           { name: 'Multi-Tenant Governance', href: '/platform?tab=dash', tabKey: 'dash', icon: Shield },
           { name: 'Provisioned Entities', href: '/platform?tab=tenants', tabKey: 'tenants', icon: Building2 },
+          { name: 'RLS Policy Auditor', href: '/platform?tab=audit', tabKey: 'audit', icon: ShieldCheck },
+          { name: 'Cluster & Telemetry', href: '/platform?tab=telemetry', tabKey: 'telemetry', icon: Activity },
+          { name: 'Security Ledger', href: '/platform?tab=security', tabKey: 'security', icon: Lock },
         ];
       default:
         return [];

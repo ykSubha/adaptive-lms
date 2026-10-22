@@ -527,7 +527,9 @@ function InstructorContent() {
                     <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-[#edf4ee] text-[#2e5a44] border border-[#dbe7dc]">
                       {course.code}
                     </span>
-                    <span className="text-xs text-slate-400 font-mono">ID: {course.id.substring(0, 8)}…</span>
+                    <span className="text-[11px] font-semibold text-slate-600 bg-slate-50 px-2.5 py-0.5 rounded-lg border border-slate-200">
+                      Core Curriculum • 4 Credits
+                    </span>
                   </div>
 
                   <div>
@@ -845,7 +847,7 @@ function InstructorContent() {
                       <tr key={flag.id} className="hover:bg-[#f8faf8] transition-colors">
                         <td className="py-3.5 px-5">
                           <div className="font-semibold text-slate-900">{flag.student?.full_name || 'Candidate'}</div>
-                          <div className="text-[10px] text-slate-400 mt-0.5">{flag.student?.email || flag.student_id.substring(0, 8)}</div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">{flag.student?.email || 'candidate@cse.bitsathy.ac.in'}</div>
                         </td>
                         <td className="py-3.5 px-4">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-md border text-[11px] font-semibold ${meta.badge}`}>

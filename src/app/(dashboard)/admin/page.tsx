@@ -484,7 +484,9 @@ function AdminContent() {
                   <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-[#edf4ee] text-[#2e5a44] border border-[#dbe7dc]">
                     {course.code}
                   </span>
-                  <span className="text-[10px] text-slate-400 font-mono">ID: {course.id.substring(0, 8)}…</span>
+                  <span className="text-[10px] text-slate-500 font-semibold bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                    Core Curriculum • 4 Credits
+                  </span>
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900">{course.title}</h3>

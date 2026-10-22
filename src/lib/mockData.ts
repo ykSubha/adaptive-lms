@@ -1,11 +1,74 @@
 import { Tenant, Profile, Course, Topic, CognitiveProfile, Question, ProctoringEvent, ClassTopicPulse } from './types';
 
 export const INITIAL_TENANTS: Tenant[] = [
-  { id: '11111111-1111-1111-1111-111111111111', name: 'School of Computing & Engineering', slug: 'alpha', created_at: '2026-01-01T00:00:00Z' },
-  { id: '22222222-2222-2222-2222-222222222222', name: 'Department of Information Sciences', slug: 'beta', created_at: '2026-01-01T00:00:00Z' }
+  {
+    id: '11111111-1111-1111-1111-111111111111',
+    name: 'School of Computing & Engineering',
+    slug: 'cse-dept',
+    domain: 'cse.bitsathy.ac.in',
+    cluster: 'AWS-AP-SOUTH-1',
+    partition_node: 'NODE-IND-MUM-01',
+    security_mode: 'Zero-Knowledge Strict RLS',
+    storage_usage: '1.4 TB / 5 TB',
+    created_at: '2026-01-01T00:00:00Z',
+  },
+  {
+    id: '22222222-2222-2222-2222-222222222222',
+    name: 'Department of Information Sciences',
+    slug: 'is-dept',
+    domain: 'is.university.edu',
+    cluster: 'AWS-AP-SOUTH-1',
+    partition_node: 'NODE-IND-MUM-02',
+    security_mode: 'Zero-Knowledge Strict RLS',
+    storage_usage: '0.8 TB / 5 TB',
+    created_at: '2026-01-01T00:00:00Z',
+  },
 ];
 
 export const INITIAL_PROFILES: Profile[] = [
+  {
+    id: '33333333-3333-3333-3333-333333333331',
+    tenant_id: '11111111-1111-1111-1111-111111111111',
+    email: 'student@bitsathy.ac.in',
+    full_name: 'Alice Vance',
+    role: 'student',
+    knowledge_score: 74,
+    created_at: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: '33333333-3333-3333-3333-333333333332',
+    tenant_id: '22222222-2222-2222-2222-222222222222',
+    email: 'student@university.edu',
+    full_name: 'Bob Chen',
+    role: 'student',
+    knowledge_score: 62,
+    created_at: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: '44444444-4444-4444-4444-444444444441',
+    tenant_id: '11111111-1111-1111-1111-111111111111',
+    email: 'faculty@bitsathy.ac.in',
+    full_name: 'Dr. Sarah Stone',
+    role: 'instructor',
+    created_at: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: '55555555-5555-5555-5555-555555555551',
+    tenant_id: '11111111-1111-1111-1111-111111111111',
+    email: 'admin@bitsathy.ac.in',
+    full_name: 'Arthur Mitchell',
+    role: 'tenant_admin',
+    created_at: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: '99999999-9999-9999-9999-999999999999',
+    tenant_id: null,
+    email: 'superadmin@platform.gov',
+    full_name: 'Samuel Hayes',
+    role: 'super_admin',
+    created_at: '2026-01-01T00:00:00Z'
+  },
+  // Backward compatible login aliases:
   {
     id: '33333333-3333-3333-3333-333333333331',
     tenant_id: '11111111-1111-1111-1111-111111111111',
@@ -387,7 +450,7 @@ export const INITIAL_PROCTORING_EVENTS: ProctoringEvent[] = [
     severity: 'high',
     status: 'pending',
     created_at: new Date(Date.now() - 6 * 60 * 1000).toISOString(),
-    student: { full_name: 'Alice Vance', email: 'student@alpha.test' },
+    student: { full_name: 'Alice Vance', email: 'alice.vance@cse.bitsathy.ac.in' },
     course: { title: 'Computer Science Core (DSA, ML & Data Science)', code: 'CSE-401' }
   },
   {
@@ -400,7 +463,7 @@ export const INITIAL_PROCTORING_EVENTS: ProctoringEvent[] = [
     severity: 'medium',
     status: 'pending',
     created_at: new Date(Date.now() - 14 * 60 * 1000).toISOString(),
-    student: { full_name: 'Alice Vance', email: 'student@alpha.test' },
+    student: { full_name: 'Alice Vance', email: 'alice.vance@cse.bitsathy.ac.in' },
     course: { title: 'Computer Science Core (DSA, ML & Data Science)', code: 'CSE-401' }
   },
   {
@@ -413,7 +476,7 @@ export const INITIAL_PROCTORING_EVENTS: ProctoringEvent[] = [
     severity: 'high',
     status: 'pending',
     created_at: new Date(Date.now() - 22 * 60 * 1000).toISOString(),
-    student: { full_name: 'Alice Vance', email: 'student@alpha.test' },
+    student: { full_name: 'Alice Vance', email: 'alice.vance@cse.bitsathy.ac.in' },
     course: { title: 'Computer Science Core (DSA, ML & Data Science)', code: 'CSE-401' }
   },
   {
@@ -426,7 +489,7 @@ export const INITIAL_PROCTORING_EVENTS: ProctoringEvent[] = [
     severity: 'medium',
     status: 'confirmed',
     created_at: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
-    student: { full_name: 'Alice Vance', email: 'student@alpha.test' },
+    student: { full_name: 'Alice Vance', email: 'alice.vance@cse.bitsathy.ac.in' },
     course: { title: 'Computer Science Core (DSA, ML & Data Science)', code: 'CSE-401' }
   }
 ];
